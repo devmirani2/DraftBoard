@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shifflett Towing & Recovery | 24/7 Towing & Roadside Assistance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt: #1b1c1e;
+    --asphalt-2: #26282b;
+    --steel: #3d4045;
+    --paper: #eceee9;
+    --paper-dim: #d8dbd3;
+    --amber: #f5a623;
+    --amber-deep: #d98c12;
+    --alert: #c62828;
+    --alert-deep: #9e1f1f;
+    --white: #ffffff;
+    --line: rgba(255,255,255,0.14);
+    --radius: 4px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--paper);
+    color:var(--asphalt);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:64px; /* room for mobile sticky bar */
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    line-height:1.05;
+  }
+  .mono{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+  }
+  a{color:inherit;}
+  img{max-width:100%; display:block;}
+  .wrap{
+    max-width:1120px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* Hazard chevron divider — signature element referencing the reflective
+     chevron striping on the back of a tow truck/flatbed */
+  .chevrons{
+    height:14px;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--amber),
+      var(--amber) 18px,
+      var(--asphalt) 18px,
+      var(--asphalt) 36px
+    );
+  }
+  .chevrons.alert{
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--alert),
+      var(--alert) 18px,
+      var(--asphalt) 18px,
+      var(--asphalt) 36px
+    );
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:var(--asphalt);
+    color:var(--paper);
+    position:sticky;
+    top:0;
+    z-index:50;
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 24px;
+    max-width:1120px;
+    margin:0 auto;
+    gap:16px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand .mark{
+    font-family:'Oswald';
+    font-weight:700;
+    font-size:1.25rem;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--white);
+  }
+  .brand .mark span{color:var(--amber);}
+  .brand .tagline{
+    display:none;
+    font-family:'IBM Plex Mono';
+    font-size:0.68rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+  }
+  @media(min-width:700px){ .brand .tagline{display:block;} }
+
+  .header-actions{display:flex; gap:10px; align-items:center;}
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-family:'Oswald';
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:0.85rem;
+    padding:12px 20px;
+    border-radius:var(--radius);
+    border:2px solid transparent;
+    cursor:pointer;
+    text-decoration:none;
+    transition:transform .12s ease, filter .12s ease;
+    white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-amber{background:var(--amber); color:var(--asphalt);}
+  .btn-amber:hover{background:var(--amber-deep);}
+  .btn-alert{background:var(--alert); color:var(--white);}
+  .btn-alert:hover{background:var(--alert-deep);}
+  .btn-outline{background:transparent; border-color:var(--paper-dim); color:var(--paper);}
+  .btn-outline:hover{border-color:var(--white);}
+  .btn-sm{padding:9px 14px; font-size:0.75rem;}
+  .btn svg{width:16px; height:16px; flex:none;}
+
+  .header-actions .btn-amber, .header-actions .btn-alert{display:none;}
+  @media(min-width:560px){ .header-actions .btn-alert{display:inline-flex;} }
+  @media(min-width:760px){ .header-actions .btn-amber{display:inline-flex;} }
+
+  /* ---------- MOBILE STICKY BAR ---------- */
+  .sticky-bar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    display:flex;
+    z-index:60;
+    box-shadow:0 -4px 14px rgba(0,0,0,0.25);
+  }
+  .sticky-bar .btn{
+    flex:1;
+    border-radius:0;
+    padding:16px 10px;
+    font-size:0.82rem;
+  }
+  @media(min-width:760px){ .sticky-bar{display:none;} }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:var(--asphalt);
+    color:var(--paper);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero-inner{
+    max-width:1120px;
+    margin:0 auto;
+    padding:56px 24px 64px;
+    display:grid;
+    gap:36px;
+  }
+  @media(min-width:900px){
+    .hero-inner{grid-template-columns:1.1fr 0.9fr; align-items:end; padding:72px 24px 80px;}
+  }
+  .ticket-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-family:'IBM Plex Mono';
+    font-size:0.72rem;
+    color:var(--amber);
+    border:1px solid rgba(245,166,35,0.4);
+    padding:6px 12px;
+    border-radius:2px;
+    margin-bottom:20px;
+  }
+  .ticket-eyebrow .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--alert);
+    box-shadow:0 0 0 3px rgba(198,40,40,0.25);
+    animation:pulse 1.8s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;} 50%{opacity:0.35;}
+  }
+  .hero h1{
+    font-size:clamp(2.4rem, 6vw, 4rem);
+    color:var(--white);
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--amber);
+  }
+  .hero p.lead{
+    margin-top:18px;
+    font-size:1.05rem;
+    color:var(--paper-dim);
+    max-width:44ch;
+  }
+  .hero-ctas{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:30px;
+  }
+  .hero-ctas .btn{padding:16px 26px; font-size:0.95rem;}
+
+  /* Dispatch ticket card — signature element */
+  .ticket{
+    background:var(--asphalt-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:24px;
+    position:relative;
+  }
+  .ticket::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:6px;
+    background: repeating-linear-gradient(
+      -45deg, var(--amber), var(--amber) 10px, var(--asphalt-2) 10px, var(--asphalt-2) 20px
+    );
+    border-radius:6px 6px 0 0;
+  }
+  .ticket-row{
+    display:flex;
+    justify-content:space-between;
+    padding:11px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:0.85rem;
+  }
+  .ticket-row:last-child{border-bottom:none;}
+  .ticket-row .label{
+    font-family:'IBM Plex Mono';
+    font-size:0.68rem;
+    color:var(--paper-dim);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .ticket-row .val{font-weight:600; color:var(--white); text-align:right;}
+  .ticket-head{
+    font-family:'IBM Plex Mono';
+    font-size:0.7rem;
+    color:var(--amber);
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    margin-bottom:4px;
+  }
+  .ticket-title{font-family:'Oswald'; font-size:1.1rem; color:var(--white); margin-bottom:14px; text-transform:uppercase;}
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{padding:64px 0;}
+  .section-head{
+    max-width:640px;
+    margin:0 0 40px;
+  }
+  .section-eyebrow{
+    font-family:'IBM Plex Mono';
+    font-size:0.72rem;
+    color:var(--amber-deep);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    display:block;
+    margin-bottom:10px;
+  }
+  .section-head h2{
+    font-size:clamp(1.7rem, 3.4vw, 2.4rem);
+  }
+  .section-head p{color:#4a4d4f; margin-top:12px; font-size:1rem; max-width:56ch;}
+
+  /* ---------- SERVICES ---------- */
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
+    gap:1px;
+    background:var(--paper-dim);
+    border:1px solid var(--paper-dim);
+  }
+  .service-card{
+    background:var(--paper);
+    padding:26px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    transition:background .15s ease;
+  }
+  .service-card:hover{background:var(--white);}
+  .service-num{
+    font-family:'IBM Plex Mono';
+    font-size:0.72rem;
+    color:var(--amber-deep);
+  }
+  .service-card h3{
+    font-size:1.05rem;
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:0;
+    font-family:'Inter';
+  }
+  .service-card p{font-size:0.88rem; color:#5a5d5f;}
+
+  /* ---------- WHY CHOOSE US ---------- */
+  .why-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
+    gap:24px;
+  }
+  .why-item{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .why-item .icon{
+    flex:none;
+    width:38px; height:38px;
+    background:var(--asphalt);
+    color:var(--amber);
+    border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .why-item h4{font-family:'Oswald'; font-size:0.95rem; text-transform:uppercase; margin-bottom:4px;}
+  .why-item p{font-size:0.86rem; color:#5a5d5f;}
+
+  /* ---------- SERVICE AREA ---------- */
+  .area-section{background:var(--asphalt-2); color:var(--paper);}
+  .area-section .section-head p{color:var(--paper-dim);}
+  .area-section .section-eyebrow{color:var(--amber);}
+  .area-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .area-item{
+    background:var(--asphalt);
+    padding:18px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    text-decoration:none;
+    color:var(--paper);
+    transition:background .15s ease;
+  }
+  .area-item:hover{background:#2f3134;}
+  .area-item .city{font-family:'Oswald'; font-size:0.95rem; text-transform:uppercase;}
+  .area-item .code{font-family:'IBM Plex Mono'; font-size:0.68rem; color:var(--amber);}
+  .area-note{margin-top:22px; font-size:0.85rem; color:var(--paper-dim);}
+
+  /* ---------- COMMERCIAL ---------- */
+  .commercial{
+    background:var(--paper);
+  }
+  .commercial-box{
+    background:var(--asphalt);
+    color:var(--paper);
+    border-radius:8px;
+    padding:44px 32px;
+    display:grid;
+    gap:28px;
+  }
+  @media(min-width:820px){
+    .commercial-box{grid-template-columns:1.2fr 0.8fr; align-items:center;}
+  }
+  .commercial-box h2{color:var(--white); font-size:clamp(1.5rem,3vw,2.1rem);}
+  .commercial-box p{color:var(--paper-dim); margin-top:14px; max-width:52ch;}
+  .commercial-tags{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;
+  }
+  .tag{
+    font-family:'IBM Plex Mono';
+    font-size:0.68rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--paper-dim);
+    padding:5px 10px;
+    border-radius:20px;
+  }
+
+  /* ---------- REVIEWS ---------- */
+  .reviews-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:20px;
+  }
+  .review-card{
+    background:var(--white);
+    border:1px solid var(--paper-dim);
+    border-radius:6px;
+    padding:22px;
+  }
+  .stars{color:var(--amber); font-size:0.9rem; letter-spacing:2px; margin-bottom:10px;}
+  .review-card p{font-size:0.9rem; color:#33353a;}
+  .review-card .who{
+    margin-top:14px;
+    font-family:'IBM Plex Mono';
+    font-size:0.7rem;
+    color:#7a7d80;
+    text-transform:uppercase;
+  }
+
+  /* ---------- FOOTER / CONTACT ---------- */
+  footer{
+    background:var(--asphalt);
+    color:var(--paper-dim);
+    padding:56px 0 28px;
+  }
+  .footer-grid{
+    display:grid;
+    gap:32px;
+    grid-template-columns:1.3fr 1fr 1fr;
+  }
+  @media(max-width:760px){ .footer-grid{grid-template-columns:1fr;} }
+  .footer-grid h4{
+    font-family:'Oswald'; color:var(--white); font-size:0.9rem;
+    text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px;
+  }
+  .footer-grid a{
+    display:block; font-size:0.88rem; color:var(--paper-dim);
+    text-decoration:none; margin-bottom:8px;
+  }
+  .footer-grid a:hover{color:var(--amber);}
+  .footer-bottom{
+    margin-top:40px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    font-family:'IBM Plex Mono';
+    font-size:0.72rem;
+    color:#7d8083;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  /* ---------- MODAL FORM ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(15,16,17,0.72);
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding:24px 16px 90px;
+    overflow-y:auto;
+    z-index:100;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--paper);
+    width:100%;
+    max-width:560px;
+    border-radius:8px;
+    margin-top:24px;
+    overflow:hidden;
+  }
+  .modal-head{
+    background:var(--asphalt);
+    color:var(--white);
+    padding:22px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .modal-head h3{font-family:'Oswald'; text-transform:uppercase; font-size:1.15rem;}
+  .modal-head .sub{font-family:'IBM Plex Mono'; font-size:0.68rem; color:var(--amber); margin-top:4px; display:block;}
+  .modal-close{
+    background:transparent; border:none; color:var(--paper-dim);
+    font-size:1.4rem; cursor:pointer; line-height:1; padding:4px;
+  }
+  .modal-close:hover{color:var(--white);}
+  .modal-body{padding:24px;}
+  .form-row{margin-bottom:16px;}
+  .form-row label{
+    display:block;
+    font-family:'IBM Plex Mono';
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:#54575a;
+    margin-bottom:6px;
+  }
+  .form-row input, .form-row select, .form-row textarea{
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--paper-dim);
+    border-radius:4px;
+    font-family:'Inter';
+    font-size:0.92rem;
+    background:var(--white);
+    color:var(--asphalt);
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{
+    outline:none;
+    border-color:var(--amber-deep);
+  }
+  .form-grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:480px){ .form-grid-2{grid-template-columns:1fr;} }
+  .file-drop{
+    border:1.5px dashed var(--paper-dim);
+    border-radius:4px;
+    padding:16px;
+    text-align:center;
+    font-size:0.82rem;
+    color:#6b6e70;
+    background:var(--white);
+    cursor:pointer;
+  }
+  .file-drop:hover{border-color:var(--amber-deep);}
+  .form-submit{width:100%; margin-top:6px; padding:15px; font-size:0.95rem;}
+  .form-note{
+    font-size:0.76rem;
+    color:#7a7d80;
+    margin-top:12px;
+    line-height:1.5;
+  }
+  .confirm{
+    display:none;
+    text-align:center;
+    padding:40px 24px;
+  }
+  .confirm.open{display:block;}
+  .confirm .check{
+    width:56px; height:56px;
+    border-radius:50%;
+    background:var(--amber);
+    color:var(--asphalt);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 18px;
+    font-size:1.6rem;
+    font-weight:700;
+  }
+  .confirm h3{font-family:'Oswald'; text-transform:uppercase; font-size:1.3rem; margin-bottom:10px;}
+  .confirm p{font-size:0.92rem; color:#5a5d5f; max-width:38ch; margin:0 auto;}
+  .confirm .ticket-id{
+    margin-top:18px;
+    font-family:'IBM Plex Mono';
+    font-size:0.78rem;
+    color:var(--amber-deep);
+    background:#f3ede0;
+    display:inline-block;
+    padding:8px 14px;
+    border-radius:4px;
+  }
+
+  /* Visible focus states for accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="mark">Shifflett<span>&nbsp;Towing</span> &amp; Recovery</div>
+      <div class="tagline">24/7 Dispatch · Montgomery County, MD</div>
+    </div>
+    <div class="header-actions">
+      <a href="tel:+13015550199" class="btn btn-alert btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Call Now
+      </a>
+      <button class="btn btn-amber btn-sm" onclick="openModal()">Request a Tow</button>
+    </div>
+  </div>
+</header>
+<div class="chevrons"></div>
+
+<!-- ================= HERO ================= -->
+<section class="hero" style="padding:0;">
+  <div class="hero-inner">
+    <div>
+      <div class="ticket-eyebrow"><span class="dot"></span> Dispatch is standing by</div>
+      <h1>24/7 Towing &amp; <em>Roadside Assistance</em></h1>
+      <p class="lead">Fast, reliable towing and recovery across Montgomery County — from a flat on the Beltway to a job that needs a flatbed at 3&nbsp;AM. One call and a truck is rolling.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-amber" onclick="openModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4l6 6-8.5 8.5a1 1 0 0 1-.7.3H4v-6.8a1 1 0 0 1 .3-.7L14 4z"/><path d="M13 5l6 6"/></svg>
+          Request a Tow
+        </button>
+        <a href="tel:+13015550199" class="btn btn-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Call (301) 555-0199
+        </a>
+      </div>
+    </div>
+
+    <!-- Signature dispatch-ticket element -->
+    <div class="ticket">
+      <div class="ticket-head">Work Order Preview</div>
+      <div class="ticket-title">What Dispatch Sees</div>
+      <div class="ticket-row"><span class="label">Service</span><span class="val">Flatbed Tow</span></div>
+      <div class="ticket-row"><span class="label">Pickup</span><span class="val">Rockville Pike</span></div>
+      <div class="ticket-row"><span class="label">Destination</span><span class="val">Certified Collision Ctr</span></div>
+      <div class="ticket-row"><span class="label">ETA</span><span class="val" style="color:var(--amber);">18 min</span></div>
+      <div class="ticket-row"><span class="label">Status</span><span class="val" style="color:var(--amber);">Driver En Route</span></div>
+    </div>
+  </div>
+</section>
+<div class="chevrons alert"></div>
+
+<!-- ================= SERVICES ================= -->
+<section id="services">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">What We Run</span>
+      <h2>Our Services</h2>
+      <p>Every truck is dispatched to the job that fits it — no guessing, no upsells you didn't ask for.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card"><span class="service-num">01</span><h3>Towing</h3><p>Local and long-distance towing for cars, SUVs, and light trucks.</p></div>
+      <div class="service-card"><span class="service-num">02</span><h3>Roadside Assistance</h3><p>On-scene help so you're not stuck waiting for a full tow.</p></div>
+      <div class="service-card"><span class="service-num">03</span><h3>Jump Starts</h3><p>Dead battery gets you moving again in minutes.</p></div>
+      <div class="service-card"><span class="service-num">04</span><h3>Tire Changes</h3><p>Flat swapped for your spare, roadside or in a lot.</p></div>
+      <div class="service-card"><span class="service-num">05</span><h3>Vehicle Lockouts</h3><p>Locked out? We get you back in without damage.</p></div>
+      <div class="service-card"><span class="service-num">06</span><h3>Fuel Delivery</h3><p>Ran out of gas? We bring enough to get you to a station.</p></div>
+      <div class="service-card"><span class="service-num">07</span><h3>Winch &amp; Recovery</h3><p>Stuck in a ditch, mud, or snow — we winch you out safely.</p></div>
+      <div class="service-card"><span class="service-num">08</span><h3>Accident Recovery</h3><p>Careful, insurance-ready recovery from a collision scene.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY CHOOSE US ================= -->
+<section style="background:var(--white); border-top:1px solid var(--paper-dim); border-bottom:1px solid var(--paper-dim);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Why Shifflett</span>
+      <h2>Why Choose Us</h2>
+    </div>
+    <div class="why-list">
+      <div class="why-item">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div><h4>24/7 Availability</h4><p>Dispatch never closes — nights, weekends, holidays.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z"/></svg>
+        </div>
+        <div><h4>Fast Response</h4><p>Trucks positioned across the county to keep ETAs short.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+        </div>
+        <div><h4>Licensed &amp; Insured</h4><p>Fully licensed operation with commercial insurance on every job.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div><h4>Professional Drivers</h4><p>Trained operators who treat your vehicle like their own.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div><h4>Upfront Pricing</h4><p>You get a real number from dispatch before a truck rolls.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SERVICE AREA ================= -->
+<section class="area-section" id="service-area">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Coverage</span>
+      <h2>Service Area</h2>
+      <p>Based in Montgomery County and running throughout the surrounding area.</p>
+    </div>
+    <div class="area-grid">
+      <a class="area-item" href="#"><span class="city">Gaithersburg</span><span class="code">MD</span></a>
+      <a class="area-item" href="#"><span class="city">Rockville</span><span class="code">MD</span></a>
+      <a class="area-item" href="#"><span class="city">Silver Spring</span><span class="code">MD</span></a>
+      <a class="area-item" href="#"><span class="city">Bethesda</span><span class="code">MD</span></a>
+      <a class="area-item" href="#"><span class="city">Germantown</span><span class="code">MD</span></a>
+      <a class="area-item" href="#"><span class="city">Frederick</span><span class="code">MD</span></a>
+    </div>
+    <p class="area-note">Don't see your area listed? Call dispatch — we frequently run jobs outside our core coverage map.</p>
+  </div>
+</section>
+
+<!-- ================= COMMERCIAL ================= -->
+<section class="commercial" id="commercial">
+  <div class="wrap">
+    <div class="commercial-box">
+      <div>
+        <span class="section-eyebrow" style="color:var(--amber);">Commercial &amp; Fleet Accounts</span>
+        <h2>Need Reliable Towing for Your Business?</h2>
+        <p>Set up a standing account for recurring or priority towing — dealerships, repair shops, property managers, and fleets all run through the same fast dispatch line.</p>
+        <div class="commercial-tags">
+          <span class="tag">Dealerships</span>
+          <span class="tag">Repair Shops</span>
+          <span class="tag">Apartment / Property Mgmt</span>
+          <span class="tag">Police &amp; Municipal</span>
+          <span class="tag">Insurance / Roadside</span>
+          <span class="tag">Fleet Companies</span>
+        </div>
+      </div>
+      <div>
+        <button class="btn btn-amber" style="width:100%;" onclick="alert('Commercial account application — build this as its own form next.')">Apply for an Account</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REVIEWS ================= -->
+<section style="background:var(--white); border-top:1px solid var(--paper-dim);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">From the Road</span>
+      <h2>What Drivers Say</h2>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p>Called at 11pm with a dead battery in a parking garage. Truck showed up faster than I expected and got me going again.</p>
+        <div class="who">Google Review — Placeholder</div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p>Locked out of my car downtown. Driver was careful, fast, and didn't scratch a thing.</p>
+        <div class="who">Google Review — Placeholder</div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p>We use them for our dealership's overflow tows. Dispatch is easy to reach and drivers show up on time.</p>
+        <div class="who">Google Review — Placeholder</div>
+      </div>
+    </div>
+    <p class="form-note" style="margin-top:20px;">Live Google reviews get embedded here once connected.</p>
+  </div>
+</section>
+
+<!-- ================= FOOTER / CONTACT ================= -->
+<footer id="contact">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>Shifflett Towing &amp; Recovery</h4>
+        <p style="font-size:0.88rem; margin-bottom:14px;">24/7 towing and roadside assistance throughout Montgomery County, MD.</p>
+        <a href="tel:+13015550199">(301) 555-0199</a>
+        <a href="mailto:dispatch@shiflettowing.com">dispatch@shiflettowing.com</a>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <a href="#services">Services</a>
+        <a href="#service-area">Service Area</a>
+        <a href="#commercial">Commercial Accounts</a>
+        <a href="#">Our Fleet</a>
+      </div>
+      <div>
+        <h4>Get Help Now</h4>
+        <button class="btn btn-amber btn-sm" style="width:100%; margin-bottom:10px;" onclick="openModal()">Request a Tow</button>
+        <a href="tel:+13015550199" class="btn btn-alert btn-sm" style="width:100%;">Call Now</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Shifflett Towing &amp; Recovery. Licensed &amp; insured.</span>
+      <span>Prototype build — not a live site</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= MOBILE STICKY BAR ================= -->
+<div class="sticky-bar">
+  <a href="tel:+13015550199" class="btn btn-alert">Call Now</a>
+  <button class="btn btn-amber" onclick="openModal()">Request a Tow</button>
+</div>
+
+<!-- ================= REQUEST A TOW MODAL ================= -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Request a Tow</h3>
+        <span class="sub">Goes straight to dispatch</span>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body" id="formView">
+      <form id="towForm" onsubmit="return submitForm(event)">
+        <div class="form-row">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required placeholder="Jordan Smith">
+        </div>
+        <div class="form-row">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" required placeholder="(301) 555-0100">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label for="pickup">Pickup Location</label>
+            <input type="text" id="pickup" required placeholder="Address or cross streets">
+          </div>
+          <div class="form-row">
+            <label for="destination">Destination</label>
+            <input type="text" id="destination" placeholder="Shop, home, or 'not sure yet'">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="vehicle">Vehicle Type</label>
+          <select id="vehicle" required>
+            <option value="">Select one</option>
+            <option>Sedan / Car</option>
+            <option>SUV / Crossover</option>
+            <option>Pickup Truck</option>
+            <option>Van</option>
+            <option>Motorcycle</option>
+            <option>Other / Not Sure</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="details">What Happened</label>
+          <textarea id="details" rows="3" required placeholder="Flat tire, accident, won't start, locked out, etc."></textarea>
+        </div>
+        <div class="form-row">
+          <label for="photo">Photo (optional)</label>
+          <label class="file-drop" for="photo" id="fileDropLabel">Tap to add a photo of the vehicle or scene</label>
+          <input type="file" id="photo" accept="image/*" style="display:none;" onchange="updateFileLabel()">
+        </div>
+        <button type="submit" class="btn btn-alert form-submit">Send Request to Dispatch</button>
+        <p class="form-note">This demo form doesn't yet connect to a live dispatcher. In production this submits straight to SMS/email so dispatch is notified within seconds.</p>
+      </form>
+    </div>
+
+    <div class="confirm" id="confirmView">
+      <div class="check">✓</div>
+      <h3>Request Sent</h3>
+      <p>Dispatch has your info and is confirming a driver now. Keep your phone nearby — we'll call from (301) 555-0199.</p>
+      <div class="ticket-id" id="ticketId">TICKET #— </div>
+      <div style="margin-top:24px;">
+        <button class="btn btn-outline" style="border-color:var(--paper-dim); color:var(--asphalt);" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(){
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('formView').style.display = 'block';
+    document.getElementById('confirmView').classList.remove('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('towForm').reset();
+    updateFileLabel();
+  }
+  document.getElementById('modalOverlay').addEventListener('click', function(e){
+    if(e.target === this){ closeModal(); }
+  });
+  function updateFileLabel(){
+    const input = document.getElementById('photo');
+    const label = document.getElementById('fileDropLabel');
+    if(input.files && input.files.length > 0){
+      label.textContent = input.files[0].name;
+    } else {
+      label.textContent = 'Tap to add a photo of the vehicle or scene';
+    }
+  }
+  function submitForm(e){
+    e.preventDefault();
+    // In production: POST this payload to a backend that texts/emails dispatch immediately.
+    const ticket = Math.floor(1000 + Math.random()*9000);
+    document.getElementById('ticketId').textContent = 'TICKET #' + ticket;
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('confirmView').classList.add('open');
+    return false;
+  }
+</script>
+
+</body>
+</html>
