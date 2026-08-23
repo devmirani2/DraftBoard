@@ -18,7 +18,6 @@
 
 <script>
   // Local storage-backed polyfill so picks persist on a real deployed site
-  // (mirrors the get/set/delete/list shape used by the component)
   window.storage = {
     async get(key) {
       const v = localStorage.getItem(key);
@@ -171,6 +170,110 @@ function teamColor(abbr) {
   return TEAMS.find((t) => t.abbr === abbr)?.c1 || "#999999";
 }
 
+// ---------- Suggested auction values ($200 budget, 12-team PPR) ----------
+// Curated for starters (QB1, RB1, WR1, WR2, TE1); everything else falls back
+// to a low flat value below, which is realistic for bench/handcuff depth.
+const RAW_VALUES = `
+Jacoby Brissett|1|Michael Penix Jr.|12|Lamar Jackson|32|Josh Allen|34|Bryce Young|3
+Caleb Williams|10|Joe Burrow|26|Shedeur Sanders|2|Dak Prescott|14|Bo Nix|9
+Jared Goff|11|Jordan Love|9|C.J. Stroud|12|Daniel Jones|8|Trevor Lawrence|7
+Patrick Mahomes|24|Kirk Cousins|4|Justin Herbert|18|Matthew Stafford|8|Malik Willis|1
+Kyler Murray|16|Drake Maye|13|Tyler Shough|2|Jaxson Dart|6|Geno Smith|4
+Jalen Hurts|22|Aaron Rodgers|5|Brock Purdy|14|Sam Darnold|7|Baker Mayfield|17
+Cam Ward|6|Jayden Daniels|28
+Jeremiyah Love|9|Bijan Robinson|62|Derrick Henry|38|James Cook|28|Chuba Hubbard|18
+D'Andre Swift|10|Chase Brown|30|Quinshon Judkins|16|Javonte Williams|9|J.K. Dobbins|14
+Jahmyr Gibbs|68|Josh Jacobs|27|David Montgomery|12|Jonathan Taylor|42|Bhayshul Tuten|11
+Kenneth Walker III|22|Ashton Jeanty|52|Omarion Hampton|34|Kyren Williams|37|De'Von Achane|48
+Aaron Jones Sr.|14|Rhamondre Stevenson|12|Travis Etienne Jr.|16|Cam Skattebo|19|Breece Hall|24
+Saquon Barkley|58|Jaylen Warren|13|Christian McCaffrey|50|Zach Charbonnet|17|Bucky Irving|33
+Tony Pollard|11|Jacory Croskey-Merritt|10
+Marvin Harrison Jr.|19|Drake London|28|Zay Flowers|24|DJ Moore|18|Tetairoa McMillan|22
+Rome Odunze|20|Ja'Marr Chase|58|Jerry Jeudy|9|CeeDee Lamb|44|Jaylen Waddle|22
+Amon-Ra St. Brown|42|Jayden Reed|16|Nico Collins|34|Josh Downs|12|Brian Thomas Jr.|32
+Rashee Rice|26|Tre Tucker|6|Ladd McConkey|27|Puka Nacua|56|Malik Washington|8
+Justin Jefferson|52|A.J. Brown|30|Chris Olave|18|Malik Nabers|38|Garrett Wilson|27
+DeVonta Smith|22|DK Metcalf|23|Mike Evans|24|Jaxon Smith-Njigba|46|Emeka Egbuka|19
+Calvin Ridley|14|Terry McLaurin|23
+Michael Wilson|3|Jahan Dotson|4|Rashod Bateman|6|Khalil Shakir|10|Xavier Legette|5
+Luther Burden III|8|Tee Higgins|28|Denzel Boston|4|George Pickens|19|Courtland Sutton|11
+Jameson Williams|15|Matthew Golden|12|Jayden Higgins|13|Keenan Allen|8|Jakobi Meyers|9
+Xavier Worthy|18|Jack Bech|3|Tre Harris|8|Davante Adams|18|Jalen Tolbert|4
+Jordan Addison|14|Romeo Doubs|6|Jordyn Tyson|5|Darius Slayton|4|Adonai Mitchell|5
+Dontayvion Wicks|4|Michael Pittman Jr.|9|Deebo Samuel Sr.|9|Cooper Kupp|10|Chris Godwin Jr.|13
+Carnell Tate|6|Stefon Diggs|12
+Trey McBride|27|Kyle Pitts|8|Mark Andrews|12|Dalton Kincaid|9|Tommy Tremble|2
+Colston Loveland|10|Drew Sample|2|Harold Fannin Jr.|6|Jake Ferguson|6|Evan Engram|7
+Sam LaPorta|16|Tucker Kraft|9|Dalton Schultz|3|Tyler Warren|14|Brenton Strange|3
+Travis Kelce|10|Brock Bowers|30|Oronde Gadsden II|3|Colby Parkinson|2|Greg Dulcich|1
+T.J. Hockenson|9|Hunter Henry|6|Juwan Johnson|2|Isaiah Likely|6|Mason Taylor|4
+Dallas Goedert|8|Pat Freiermuth|6|George Kittle|19|AJ Barner|3|Cade Otton|4
+Gunnar Helm|3|Chig Okonkwo|4
+`.trim();
+
+const RB2_BUMPS = {
+  "trevveyonhenderson": 6,
+  "rjharvey": 5,
+  "tyronetracyjr": 4,
+  "alvinkamara": 8,
+  "isiahpacheco": 4,
+  "brianrobinsonjr": 4,
+  "rachaadwhite": 4,
+  "woodymarks": 3,
+  "djgiddens": 3,
+  "braelonallen": 3,
+  "ricodowdle": 3,
+  "jaydonblue": 4,
+  "blakecorum": 3,
+  "jordanmason": 3,
+  "marshawnlloyd": 3,
+};
+
+const VALUES = {};
+(function buildValues() {
+  const parts = RAW_VALUES.split(/[\n|]/).map((s) => s.trim()).filter(Boolean);
+  for (let i = 0; i < parts.length - 1; i += 2) {
+    const name = parts[i];
+    const val = parseInt(parts[i + 1], 10);
+    if (!isNaN(val)) VALUES[normalize(name)] = val;
+  }
+})();
+
+function estimateValue(player) {
+  const curated = VALUES[player.norm];
+  if (curated != null) return curated;
+  if (player.slot === "rb" && player.idx === 1) return RB2_BUMPS[player.norm] || 2;
+  if (player.slot === "rb" && player.idx === 2) return 1;
+  if (player.slot === "wr" && (player.idx === 2 || player.idx === 3)) return 1;
+  if (player.slot === "te" && player.idx === 1) return 1;
+  if (player.slot === "qb") return 1;
+  return 1;
+}
+
+function valueTier(value, bid) {
+  const stealMax = Math.max(1, Math.floor(value * 0.75) - 1);
+  const fairMax = Math.ceil(value * 1.2);
+  if (bid <= stealMax) return "steal";
+  if (bid <= fairMax) return "fair";
+  return "over";
+}
+
+// ---------- Priority board: top players per position by suggested value ----------
+const PRIORITY_POS = [
+  { key: "qb", label: "QB", count: 12 },
+  { key: "rb", label: "RB", count: 20 },
+  { key: "wr", label: "WR", count: 20 },
+  { key: "te", label: "TE", count: 12 },
+];
+
+const PRIORITY_LISTS = {};
+PRIORITY_POS.forEach((p) => {
+  PRIORITY_LISTS[p.key] = PLAYER_INDEX.filter((pl) => pl.slot === p.key)
+    .map((pl) => ({ ...pl, value: estimateValue(pl) }))
+    .sort((a, b) => b.value - a.value || a.idx - b.idx)
+    .slice(0, p.count);
+});
+
 function DraftWall() {
   const [drafted, setDrafted] = useState({}); // id -> true
   const [myPicks, setMyPicks] = useState([]); // ordered array of player ids
@@ -183,8 +286,13 @@ function DraftWall() {
   const [posTab, setPosTab] = useState("ALL");
   const [loaded, setLoaded] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [valueInput, setValueInput] = useState("");
+  const [valueSuggestions, setValueSuggestions] = useState([]);
+  const [selectedValuePlayer, setSelectedValuePlayer] = useState(null);
+  const [bidInput, setBidInput] = useState("");
   const inputRef = useRef(null);
   const myInputRef = useRef(null);
+  const valueInputRef = useRef(null);
   const saveTimer = useRef(null);
 
   useEffect(() => {
@@ -312,6 +420,33 @@ function DraftWall() {
     });
   };
 
+  const handleValueInputChange = (v) => {
+    setValueInput(v);
+    setSelectedValuePlayer(null);
+    if (!v.trim()) {
+      setValueSuggestions([]);
+      return;
+    }
+    const n = normalize(v);
+    const matches = PLAYER_INDEX.filter((p) => p.norm.includes(n)).slice(0, 6);
+    setValueSuggestions(matches);
+  };
+
+  const selectValuePlayer = (player) => {
+    setSelectedValuePlayer(player);
+    setValueInput(player.name);
+    setValueSuggestions([]);
+    setBidInput("");
+  };
+
+  const submitValueSearch = () => {
+    if (!valueInput.trim()) return;
+    const n = normalize(valueInput);
+    let match = PLAYER_INDEX.find((p) => p.norm === n);
+    if (!match) match = PLAYER_INDEX.find((p) => p.norm.includes(n));
+    if (match) selectValuePlayer(match);
+  };
+
   const myPlayers = useMemo(
     () => myPicks.map((id) => PLAYER_INDEX.find((p) => p.id === id)).filter(Boolean),
     [myPicks]
@@ -356,6 +491,13 @@ function DraftWall() {
         input:focus { outline: none; }
         @keyframes flashIn { 0% { opacity:0; transform: translateY(-4px);} 100% {opacity:1; transform:translateY(0);} }
         .dw-flash { animation: flashIn .18s ease; }
+        @media (max-width: 860px) {
+          .dw-bottom-grid { grid-template-columns: 1fr !important; }
+          .dw-priority-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .dw-priority-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <div style={styles.headerRow}>
@@ -502,6 +644,7 @@ function DraftWall() {
         })}
       </div>
 
+      <div className="dw-bottom-grid" style={styles.bottomGrid}>
       <div style={styles.myTeamSection}>
         <div style={styles.myTeamHeader}>
           <h2 style={styles.h2}>MY TEAM</h2>
@@ -585,6 +728,171 @@ function DraftWall() {
               ) : (
                 <span style={styles.rosterEmpty}>Empty</span>
               )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={styles.valueSection}>
+        <div style={styles.myTeamHeader}>
+          <h2 style={styles.h2}>BID CHECK</h2>
+        </div>
+        <p style={styles.valueBlurb}>
+          Type any player to see a suggested max bid, then check where a live bid falls.
+        </p>
+
+        <div style={styles.myInputWrap}>
+          <input
+            ref={valueInputRef}
+            value={valueInput}
+            onChange={(e) => handleValueInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitValueSearch();
+              if (e.key === "Escape") {
+                setValueInput("");
+                setValueSuggestions([]);
+              }
+            }}
+            placeholder="Type a player name…"
+            style={styles.mainInput}
+          />
+          {valueInput && (
+            <X
+              size={16}
+              color={FAINT}
+              style={{ cursor: "pointer", flexShrink: 0 }}
+              onClick={() => {
+                setValueInput("");
+                setValueSuggestions([]);
+                setSelectedValuePlayer(null);
+              }}
+            />
+          )}
+          {valueSuggestions.length > 0 && (
+            <div style={styles.suggBox}>
+              {valueSuggestions.map((s) => (
+                <div key={s.id} className="dw-sugg" style={styles.suggItem} onClick={() => selectValuePlayer(s)}>
+                  <span style={{ fontWeight: 600 }}>{s.name}</span>
+                  <span style={{ color: FAINT, fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>
+                    {s.team} · {s.slot.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {selectedValuePlayer &&
+          (() => {
+            const value = estimateValue(selectedValuePlayer);
+            const stealMax = Math.max(1, Math.floor(value * 0.75) - 1);
+            const fairMax = Math.ceil(value * 1.2);
+            const bid = parseInt(bidInput, 10);
+            const hasBid = bidInput.trim() !== "" && !isNaN(bid);
+            const tier = hasBid ? valueTier(value, bid) : null;
+            const tierMeta = {
+              steal: { label: "STEAL", color: "#1F8A4C", bg: "#E9F7EF" },
+              fair: { label: "FAIR VALUE", color: "#8A6D1F", bg: "#FBF3DE" },
+              over: { label: "OVERVALUED", color: "#B4423C", bg: "#FBEAE9" },
+            };
+            return (
+              <div style={styles.valueCard}>
+                <div style={styles.valueCardTop}>
+                  <span
+                    style={{ ...styles.rosterSwatch, background: teamColor(selectedValuePlayer.team) }}
+                  />
+                  <span style={styles.valueName}>{selectedValuePlayer.name}</span>
+                  <span style={styles.rosterTeam}>
+                    {selectedValuePlayer.slot.toUpperCase()} · {selectedValuePlayer.team}
+                  </span>
+                </div>
+
+                <div style={styles.valueBig}>
+                  <span style={styles.valueBigNum}>${value}</span>
+                  <span style={styles.valueBigLabel}>suggested max bid</span>
+                </div>
+
+                <div style={styles.valueScale}>
+                  <div style={{ ...styles.valueBand, background: "#E9F7EF", color: "#1F8A4C" }}>
+                    <span style={styles.valueBandLabel}>Steal</span>
+                    <span style={styles.valueBandRange}>$1–{stealMax}</span>
+                  </div>
+                  <div style={{ ...styles.valueBand, background: "#FBF3DE", color: "#8A6D1F" }}>
+                    <span style={styles.valueBandLabel}>Fair</span>
+                    <span style={styles.valueBandRange}>
+                      ${stealMax + 1}–{fairMax}
+                    </span>
+                  </div>
+                  <div style={{ ...styles.valueBand, background: "#FBEAE9", color: "#B4423C" }}>
+                    <span style={styles.valueBandLabel}>Overvalued</span>
+                    <span style={styles.valueBandRange}>${fairMax + 1}+</span>
+                  </div>
+                </div>
+
+                <div style={styles.bidCheckRow}>
+                  <span style={styles.bidCheckLabel}>Bid so far</span>
+                  <span style={{ color: DIM, fontFamily: "JetBrains Mono, monospace" }}>$</span>
+                  <input
+                    type="number"
+                    value={bidInput}
+                    onChange={(e) => setBidInput(e.target.value)}
+                    placeholder="0"
+                    style={styles.bidInput}
+                  />
+                  {tier && (
+                    <span
+                      style={{
+                        ...styles.verdictPill,
+                        color: tierMeta[tier].color,
+                        background: tierMeta[tier].bg,
+                      }}
+                    >
+                      {tierMeta[tier].label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+      </div>
+      </div>
+
+      <div style={styles.priorityWrap}>
+        <div style={styles.myTeamHeader}>
+          <h2 style={styles.h2}>PRIORITY BOARD</h2>
+          <span style={styles.subtitle}>top targets by position, ranked by suggested value</span>
+        </div>
+        <div className="dw-priority-grid" style={styles.priorityGrid}>
+          {PRIORITY_POS.map((p) => (
+            <div key={p.key} style={styles.priorityCol}>
+              <div style={styles.priorityColHeader}>{p.label}</div>
+              <div style={styles.priorityList}>
+                {PRIORITY_LISTS[p.key].map((pl, i) => {
+                  const isDrafted = !!drafted[pl.id];
+                  return (
+                    <div
+                      key={pl.id}
+                      className="dw-name"
+                      style={{ ...styles.priorityRow, opacity: isDrafted ? 0.45 : 1 }}
+                      onClick={() => toggle(pl)}
+                      title={isDrafted ? "Click to undo" : "Click to mark drafted"}
+                    >
+                      <span style={styles.priorityRank}>{i + 1}</span>
+                      <span style={{ ...styles.rosterSwatch, background: teamColor(pl.team) }} />
+                      <span
+                        style={{
+                          ...styles.priorityName,
+                          textDecoration: isDrafted ? "line-through" : "none",
+                          color: isDrafted ? RED : TEXT,
+                        }}
+                      >
+                        {pl.name}
+                      </span>
+                      <span style={styles.priorityValue}>${pl.value}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
@@ -763,11 +1071,7 @@ const styles = {
   slotNames: { display: "flex", flexWrap: "wrap", fontSize: 12.5, lineHeight: 1.5 },
   playerName: { fontFamily: "Inter, sans-serif" },
   slashDim: { color: FAINT },
-  myTeamSection: {
-    marginTop: 36,
-    paddingTop: 24,
-    borderTop: `1px solid ${BORDER}`,
-  },
+  myTeamSection: {},
   myTeamHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -839,6 +1143,163 @@ const styles = {
     border: `1px dashed ${BORDER}`,
     borderRadius: 8,
     padding: "9px 12px",
+  },
+  bottomGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 28,
+    alignItems: "start",
+    marginTop: 36,
+    paddingTop: 24,
+    borderTop: `1px solid ${BORDER}`,
+  },
+  valueSection: {},
+  valueBlurb: {
+    fontSize: 12.5,
+    color: DIM,
+    lineHeight: 1.5,
+    margin: "0 0 14px",
+    maxWidth: 440,
+  },
+  valueCard: {
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 10,
+    padding: "16px 16px 14px",
+    maxWidth: 480,
+  },
+  valueCardTop: { display: "flex", alignItems: "center", gap: 9, marginBottom: 14 },
+  valueName: { fontSize: 15, fontWeight: 700, color: TEXT },
+  valueBig: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 8,
+    marginBottom: 16,
+  },
+  valueBigNum: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 34,
+    fontWeight: 700,
+    color: TEXT,
+  },
+  valueBigLabel: {
+    fontSize: 12.5,
+    color: FAINT,
+  },
+  valueScale: {
+    display: "flex",
+    gap: 6,
+    marginBottom: 16,
+  },
+  valueBand: {
+    flex: 1,
+    borderRadius: 8,
+    padding: "8px 10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+  },
+  valueBandLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.3px",
+  },
+  valueBandRange: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 12.5,
+  },
+  bidCheckRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    borderTop: `1px solid ${BORDER}`,
+    paddingTop: 14,
+  },
+  bidCheckLabel: {
+    fontSize: 12.5,
+    color: DIM,
+    fontWeight: 600,
+  },
+  bidInput: {
+    background: BG,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 6,
+    color: TEXT,
+    fontSize: 13,
+    fontFamily: "JetBrains Mono, monospace",
+    padding: "6px 8px",
+    width: 70,
+  },
+  verdictPill: {
+    marginLeft: "auto",
+    fontSize: 11.5,
+    fontWeight: 700,
+    letterSpacing: "0.3px",
+    borderRadius: 20,
+    padding: "5px 12px",
+  },
+  priorityWrap: {
+    marginTop: 36,
+    paddingTop: 24,
+    borderTop: `1px solid ${BORDER}`,
+  },
+  priorityGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 14,
+    marginTop: 16,
+  },
+  priorityCol: {
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  priorityColHeader: {
+    fontFamily: "Oswald, sans-serif",
+    fontWeight: 700,
+    fontSize: 14,
+    letterSpacing: "1px",
+    padding: "10px 12px",
+    borderBottom: `1px solid ${BORDER}`,
+    background: "#111111",
+    color: "#FFFFFF",
+  },
+  priorityList: {
+    display: "flex",
+    flexDirection: "column",
+    maxHeight: 480,
+    overflowY: "auto",
+  },
+  priorityRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "7px 12px",
+    borderBottom: `1px solid ${BORDER}`,
+    cursor: "pointer",
+  },
+  priorityRank: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 10.5,
+    color: FAINT,
+    width: 16,
+    flexShrink: 0,
+  },
+  priorityName: {
+    fontSize: 12.5,
+    fontWeight: 500,
+    flex: 1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  priorityValue: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 11.5,
+    fontWeight: 700,
+    color: DIM,
+    flexShrink: 0,
   },
 };
 
