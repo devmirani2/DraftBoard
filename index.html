@@ -1,908 +1,775 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shifflett Towing & Recovery | 24/7 Towing & Roadside Assistance</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --asphalt: #1b1c1e;
-    --asphalt-2: #26282b;
-    --steel: #3d4045;
-    --paper: #eceee9;
-    --paper-dim: #d8dbd3;
-    --amber: #2fa0de;
-    --amber-deep: #1c7fb8;
-    --alert: #14568c;
-    --alert-deep: #0f4470;
-    --white: #ffffff;
-    --line: rgba(255,255,255,0.14);
-    --radius: 4px;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
-  body{
-    font-family:'Inter', sans-serif;
-    background:var(--paper);
-    color:var(--asphalt);
-    line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-    padding-bottom:64px; /* room for mobile sticky bar */
-  }
-  h1,h2,h3,.display{
-    font-family:'Oswald', sans-serif;
-    text-transform:uppercase;
-    letter-spacing:0.02em;
-    line-height:1.05;
-  }
-  .mono{
-    font-family:'IBM Plex Mono', monospace;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-  }
-  a{color:inherit;}
-  img{max-width:100%; display:block;}
-  .wrap{
-    max-width:1120px;
-    margin:0 auto;
-    padding:0 24px;
-  }
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Search, RotateCcw, X } from "lucide-react";
 
-  /* Hazard chevron divider — signature element referencing the reflective
-     chevron striping on the back of a tow truck/flatbed */
-  .chevrons{
-    height:14px;
-    background: repeating-linear-gradient(
-      -45deg,
-      var(--amber),
-      var(--amber) 18px,
-      var(--asphalt) 18px,
-      var(--asphalt) 36px
-    );
-  }
-  .chevrons.alert{
-    background: repeating-linear-gradient(
-      -45deg,
-      var(--alert),
-      var(--alert) 18px,
-      var(--asphalt) 18px,
-      var(--asphalt) 36px
-    );
-  }
+// ---------- Team data (2026 depth charts: 2 QB, 3 RB, 4 WR, 2 TE per team) ----------
+const TEAMS = [
+  { abbr: "ARI", name: "Cardinals", c1: "#97233F", c2: "#FFB612", qb: ["Jacoby Brissett", "Gardner Minshew"], rb: ["Jeremiyah Love", "Tyler Allgeier", "James Conner"], wr: ["Marvin Harrison Jr.", "Michael Wilson", "Kendrick Bourne", "Simi Fehoko"], te: ["Trey McBride", "Elijah Higgins"] },
+  { abbr: "ATL", name: "Falcons", c1: "#A71930", c2: "#A5ACAF", qb: ["Michael Penix Jr.", "Tua Tagovailoa"], rb: ["Bijan Robinson", "Brian Robinson Jr.", "Tyler Goodson"], wr: ["Drake London", "Jahan Dotson", "Olamide Zaccheaus", "Chris Blair"], te: ["Kyle Pitts", "Charlie Woerner"] },
+  { abbr: "BAL", name: "Ravens", c1: "#241773", c2: "#9E7C0C", qb: ["Lamar Jackson", "Tyler Huntley"], rb: ["Derrick Henry", "Justice Hill", "Rasheen Ali"], wr: ["Zay Flowers", "Rashod Bateman", "Devontez Walker", "Elijah Sarratt"], te: ["Mark Andrews", "Durham Smythe"] },
+  { abbr: "BUF", name: "Bills", c1: "#00338D", c2: "#C60C30", qb: ["Josh Allen", "Kyle Allen"], rb: ["James Cook", "Ty Johnson", "Ray Davis"], wr: ["DJ Moore", "Khalil Shakir", "Keon Coleman", "Josh Palmer"], te: ["Dalton Kincaid", "Dawson Knox"] },
+  { abbr: "CAR", name: "Panthers", c1: "#0085CA", c2: "#101820", qb: ["Bryce Young", "Kenny Pickett"], rb: ["Chuba Hubbard", "Jonathon Brooks", "Trevor Etienne"], wr: ["Tetairoa McMillan", "Xavier Legette", "Jalen Coker", "David Moore"], te: ["Tommy Tremble", "Darren Waller"] },
+  { abbr: "CHI", name: "Bears", c1: "#0B162A", c2: "#C83803", qb: ["Caleb Williams", "Tyson Bagent"], rb: ["D'Andre Swift", "Kyle Monangai", "Roschon Johnson"], wr: ["Rome Odunze", "Luther Burden III", "Kalif Raymond", "Jahdae Walker"], te: ["Colston Loveland", "Cole Kmet"] },
+  { abbr: "CIN", name: "Bengals", c1: "#FB4F14", c2: "#000000", qb: ["Joe Burrow", "Joe Flacco"], rb: ["Chase Brown", "Samaje Perine", "Tahj Brooks"], wr: ["Ja'Marr Chase", "Tee Higgins", "Andrei Iosivas", "Mitchell Tinsley"], te: ["Drew Sample", "Mike Gesicki"] },
+  { abbr: "CLE", name: "Browns", c1: "#311D00", c2: "#FF3C00", qb: ["Shedeur Sanders", "Deshaun Watson"], rb: ["Quinshon Judkins", "Dylan Sampson", "Raheim Sanders"], wr: ["Jerry Jeudy", "Denzel Boston", "Cedric Tillman", "KC Concepcion"], te: ["Harold Fannin Jr.", "Blake Whiteheart"] },
+  { abbr: "DAL", name: "Cowboys", c1: "#041E42", c2: "#869397", qb: ["Dak Prescott", "Joe Milton III"], rb: ["Javonte Williams", "Jaydon Blue", "Phil Mafah"], wr: ["CeeDee Lamb", "George Pickens", "Ryan Flournoy", "KaVontae Turpin"], te: ["Jake Ferguson", "Brevyn Spann-Ford"] },
+  { abbr: "DEN", name: "Broncos", c1: "#FB4F14", c2: "#002244", qb: ["Bo Nix", "Jarrett Stidham"], rb: ["J.K. Dobbins", "RJ Harvey", "Jonah Coleman"], wr: ["Jaylen Waddle", "Courtland Sutton", "Marvin Mims Jr.", "Troy Franklin"], te: ["Evan Engram", "Adam Trautman"] },
+  { abbr: "DET", name: "Lions", c1: "#0076B6", c2: "#B0B7BC", qb: ["Jared Goff", "Joshua Dobbs"], rb: ["Jahmyr Gibbs", "Isiah Pacheco", "Sione Vaki"], wr: ["Amon-Ra St. Brown", "Jameson Williams", "Isaac TeSlaa", "Greg Dortch"], te: ["Sam LaPorta", "Brock Wright"] },
+  { abbr: "GB", name: "Packers", c1: "#203731", c2: "#FFB612", qb: ["Jordan Love", "Tyrod Taylor"], rb: ["Josh Jacobs", "MarShawn Lloyd", "Chris Brooks"], wr: ["Jayden Reed", "Matthew Golden", "Christian Watson", "Savion Williams"], te: ["Tucker Kraft", "Josh Whyle"] },
+  { abbr: "HOU", name: "Texans", c1: "#03202F", c2: "#A71930", qb: ["C.J. Stroud", "Davis Mills"], rb: ["David Montgomery", "Woody Marks", "Jawhar Jordan"], wr: ["Nico Collins", "Jayden Higgins", "Jaylin Noel", "Xavier Hutchinson"], te: ["Dalton Schultz", "Foster Moreau"] },
+  { abbr: "IND", name: "Colts", c1: "#002C5F", c2: "#A2AAAD", qb: ["Daniel Jones", "Riley Leonard"], rb: ["Jonathan Taylor", "Seth McGowan", "DJ Giddens"], wr: ["Josh Downs", "Keenan Allen", "Alec Pierce", "Ashton Dulin"], te: ["Tyler Warren", "Mo Alie-Cox"] },
+  { abbr: "JAX", name: "Jaguars", c1: "#101820", c2: "#D7A22A", qb: ["Trevor Lawrence", "Nick Mullens"], rb: ["Bhayshul Tuten", "Chris Rodriguez Jr.", "LeQuint Allen Jr."], wr: ["Brian Thomas Jr.", "Jakobi Meyers", "Parker Washington", "Travis Hunter"], te: ["Brenton Strange", "Nate Boerkircher"] },
+  { abbr: "KC", name: "Chiefs", c1: "#E31837", c2: "#FFB81C", qb: ["Patrick Mahomes", "Justin Fields"], rb: ["Kenneth Walker III", "Emari Demercado", "Brashard Smith"], wr: ["Rashee Rice", "Xavier Worthy", "Tyquan Thornton", "Jalen Royals"], te: ["Travis Kelce", "Noah Gray"] },
+  { abbr: "LV", name: "Raiders", c1: "#000000", c2: "#A5ACAF", qb: ["Kirk Cousins", "Fernando Mendoza"], rb: ["Ashton Jeanty", "Mike Washington Jr.", "Dylan Laube"], wr: ["Tre Tucker", "Jack Bech", "Jalen Nailor", "Dont'e Thornton Jr."], te: ["Brock Bowers", "Michael Mayer"] },
+  { abbr: "LAC", name: "Chargers", c1: "#0080C6", c2: "#FFC20E", qb: ["Justin Herbert", "Trey Lance"], rb: ["Omarion Hampton", "Keaton Mitchell", "Kimani Vidal"], wr: ["Ladd McConkey", "Tre Harris", "Quentin Johnston", "Derius Davis"], te: ["Oronde Gadsden II", "David Njoku"] },
+  { abbr: "LAR", name: "Rams", c1: "#003594", c2: "#FFA300", qb: ["Matthew Stafford", "Stetson Bennett"], rb: ["Kyren Williams", "Blake Corum", "Ronnie Rivers"], wr: ["Puka Nacua", "Davante Adams", "Jordan Whittington", "Konata Mumpfield"], te: ["Colby Parkinson", "Tyler Higbee"] },
+  { abbr: "MIA", name: "Dolphins", c1: "#008E97", c2: "#FC4C02", qb: ["Malik Willis", "Quinn Ewers"], rb: ["De'Von Achane", "Jaylen Wright", "Ollie Gordon II"], wr: ["Malik Washington", "Jalen Tolbert", "Caleb Douglas", "Tutu Atwell"], te: ["Greg Dulcich", "Will Kacmarek"] },
+  { abbr: "MIN", name: "Vikings", c1: "#4F2683", c2: "#FFC62F", qb: ["Kyler Murray", "J.J. McCarthy"], rb: ["Aaron Jones Sr.", "Jordan Mason", "Demond Claiborne"], wr: ["Justin Jefferson", "Jordan Addison", "Jauan Jennings", "Tai Felton"], te: ["T.J. Hockenson", "Josh Oliver"] },
+  { abbr: "NE", name: "Patriots", c1: "#002244", c2: "#C60C30", qb: ["Drake Maye", "Tommy DeVito"], rb: ["Rhamondre Stevenson", "TreVeyon Henderson", "Lan Larison"], wr: ["A.J. Brown", "Romeo Doubs", "DeMario Douglas", "Kayshon Boutte"], te: ["Hunter Henry", "Eli Raridon"] },
+  { abbr: "NO", name: "Saints", c1: "#D3BC8D", c2: "#101820", qb: ["Tyler Shough", "Spencer Rattler"], rb: ["Travis Etienne Jr.", "Alvin Kamara", "Devin Neal"], wr: ["Chris Olave", "Jordyn Tyson", "Devaughn Vele", "Barion Brown"], te: ["Juwan Johnson", "Noah Fant"] },
+  { abbr: "NYG", name: "Giants", c1: "#0B2265", c2: "#A71930", qb: ["Jaxson Dart", "Jameis Winston"], rb: ["Cam Skattebo", "Tyrone Tracy Jr.", "Devin Singletary"], wr: ["Malik Nabers", "Darius Slayton", "Calvin Austin III", "Darnell Mooney"], te: ["Isaiah Likely", "Theo Johnson"] },
+  { abbr: "NYJ", name: "Jets", c1: "#125740", c2: "#000000", qb: ["Geno Smith", "Cade Klubnik"], rb: ["Breece Hall", "Braelon Allen", "Isaiah Davis"], wr: ["Garrett Wilson", "Adonai Mitchell", "Isaiah Williams", "Tim Patrick"], te: ["Mason Taylor", "Kenyon Sadiq"] },
+  { abbr: "PHI", name: "Eagles", c1: "#004C54", c2: "#A5ACAF", qb: ["Jalen Hurts", "Tanner McKee"], rb: ["Saquon Barkley", "Tank Bigsby", "Will Shipley"], wr: ["DeVonta Smith", "Dontayvion Wicks", "Makai Lemon", "Elijah Moore"], te: ["Dallas Goedert", "Johnny Mundt"] },
+  { abbr: "PIT", name: "Steelers", c1: "#FFB612", c2: "#101820", qb: ["Aaron Rodgers", "Mason Rudolph"], rb: ["Jaylen Warren", "Rico Dowdle", "Kaleb Johnson"], wr: ["DK Metcalf", "Michael Pittman Jr.", "Roman Wilson", "Ben Skowronek"], te: ["Pat Freiermuth", "Darnell Washington"] },
+  { abbr: "SF", name: "49ers", c1: "#AA0000", c2: "#B3995D", qb: ["Brock Purdy", "Mac Jones"], rb: ["Christian McCaffrey", "Jordan James", "Kaelon Black"], wr: ["Mike Evans", "Deebo Samuel Sr.", "Christian Kirk", "De'Zhaun Stribling"], te: ["George Kittle", "Jake Tonges"] },
+  { abbr: "SEA", name: "Seahawks", c1: "#002244", c2: "#69BE28", qb: ["Sam Darnold", "Drew Lock"], rb: ["Zach Charbonnet", "Jadarian Price", "George Holani"], wr: ["Jaxon Smith-Njigba", "Cooper Kupp", "Rashid Shaheed", "Tory Horton"], te: ["AJ Barner", "Eric Saubert"] },
+  { abbr: "TB", name: "Buccaneers", c1: "#D50A0A", c2: "#34302B", qb: ["Baker Mayfield", "Jake Browning"], rb: ["Bucky Irving", "Kenny Gainwell", "Sean Tucker"], wr: ["Emeka Egbuka", "Chris Godwin Jr.", "Jalen McMillan", "Tez Johnson"], te: ["Cade Otton", "Payne Durham"] },
+  { abbr: "TEN", name: "Titans", c1: "#0C2340", c2: "#4B92DB", qb: ["Cam Ward", "Mitchell Trubisky"], rb: ["Tony Pollard", "Tyjae Spears", "Nicholas Singleton"], wr: ["Calvin Ridley", "Carnell Tate", "Wan'Dale Robinson", "Elic Ayomanor"], te: ["Gunnar Helm", "Daniel Bellinger"] },
+  { abbr: "WAS", name: "Commanders", c1: "#5A1414", c2: "#FFB612", qb: ["Jayden Daniels", "Marcus Mariota"], rb: ["Jacory Croskey-Merritt", "Rachaad White", "Kaytron Allen"], wr: ["Terry McLaurin", "Stefon Diggs", "Luke McCaffrey", "Antonio Williams"], te: ["Chig Okonkwo", "John Bates"] },
+];
 
-  /* ---------- HEADER ---------- */
-  header{
-    background:var(--asphalt);
-    color:var(--paper);
-    position:sticky;
-    top:0;
-    z-index:50;
-    border-bottom:1px solid var(--line);
-  }
-  .header-inner{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:16px 24px;
-    max-width:1120px;
-    margin:0 auto;
-    gap:16px;
-  }
-  .brand{
-    display:flex;
-    align-items:baseline;
-    gap:10px;
-  }
-  .brand .mark{
-    font-family:'Oswald';
-    font-weight:700;
-    font-size:1.25rem;
-    letter-spacing:0.03em;
-    text-transform:uppercase;
-    color:var(--white);
-  }
-  .brand .mark span{color:var(--amber);}
-  .brand .tagline{
-    display:none;
-    font-family:'IBM Plex Mono';
-    font-size:0.68rem;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--paper-dim);
-  }
-  @media(min-width:700px){ .brand .tagline{display:block;} }
+const SLOTS = [
+  { key: "qb", label: "QB" },
+  { key: "rb", label: "RB" },
+  { key: "wr", label: "WR" },
+  { key: "te", label: "TE" },
+];
 
-  .header-actions{display:flex; gap:10px; align-items:center;}
-  .btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    font-family:'Oswald';
-    font-weight:600;
-    text-transform:uppercase;
-    letter-spacing:0.04em;
-    font-size:0.85rem;
-    padding:12px 20px;
-    border-radius:var(--radius);
-    border:2px solid transparent;
-    cursor:pointer;
-    text-decoration:none;
-    transition:transform .12s ease, filter .12s ease;
-    white-space:nowrap;
-  }
-  .btn:active{transform:translateY(1px);}
-  .btn-amber{background:var(--amber); color:var(--asphalt);}
-  .btn-amber:hover{background:var(--amber-deep);}
-  .btn-alert{background:var(--alert); color:var(--white);}
-  .btn-alert:hover{background:var(--alert-deep);}
-  .btn-outline{background:transparent; border-color:var(--paper-dim); color:var(--paper);}
-  .btn-outline:hover{border-color:var(--white);}
-  .btn-sm{padding:9px 14px; font-size:0.75rem;}
-  .btn svg{width:16px; height:16px; flex:none;}
+const BG = "#FFFFFF";
+const PANEL = "#F6F6F6";
+const TEXT = "#111111";
+const DIM = "#444444";
+const FAINT = "#8A8A8A";
+const RED = "#D6362A";
+const BORDER = "#DADADA";
+const STORAGE_KEY = "nfl-draft-wall-v1";
 
-  .header-actions .btn-amber, .header-actions .btn-alert{display:none;}
-  @media(min-width:560px){ .header-actions .btn-alert{display:inline-flex;} }
-  @media(min-width:760px){ .header-actions .btn-amber{display:inline-flex;} }
+function normalize(s) {
+  return s
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/\b(jr|sr|ii|iii|iv)\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
 
-  /* ---------- MOBILE STICKY BAR ---------- */
-  .sticky-bar{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    display:flex;
-    z-index:60;
-    box-shadow:0 -4px 14px rgba(0,0,0,0.25);
-  }
-  .sticky-bar .btn{
-    flex:1;
-    border-radius:0;
-    padding:16px 10px;
-    font-size:0.82rem;
-  }
-  @media(min-width:760px){ .sticky-bar{display:none;} }
+// relative luminance -> pick readable text color against a hex bg
+function textOn(hex) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16) / 255;
+  const g = parseInt(h.substring(2, 4), 16) / 255;
+  const b = parseInt(h.substring(4, 6), 16) / 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.55 ? "#101214" : "#F5F3EE";
+}
 
-  /* ---------- HERO ---------- */
-  .hero{
-    background:var(--asphalt);
-    color:var(--paper);
-    position:relative;
-    overflow:hidden;
-  }
-  .hero-inner{
-    max-width:1120px;
-    margin:0 auto;
-    padding:56px 24px 64px;
-    display:grid;
-    gap:36px;
-  }
-  @media(min-width:900px){
-    .hero-inner{grid-template-columns:1.1fr 0.9fr; align-items:end; padding:72px 24px 80px;}
-  }
-  .ticket-eyebrow{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    font-family:'IBM Plex Mono';
-    font-size:0.72rem;
-    color:var(--amber);
-    border:1px solid rgba(47,160,222,0.4);
-    padding:6px 12px;
-    border-radius:2px;
-    margin-bottom:20px;
-  }
-  .ticket-eyebrow .dot{
-    width:7px; height:7px; border-radius:50%;
-    background:#2ecc71;
-    box-shadow:0 0 0 3px rgba(46,204,113,0.25);
-    animation:pulse 1.8s infinite;
-  }
-  @keyframes pulse{
-    0%,100%{opacity:1;} 50%{opacity:0.35;}
-  }
-  .hero h1{
-    font-size:clamp(2.4rem, 6vw, 4rem);
-    color:var(--white);
-  }
-  .hero h1 em{
-    font-style:normal;
-    color:var(--amber);
-  }
-  .hero p.lead{
-    margin-top:18px;
-    font-size:1.05rem;
-    color:var(--paper-dim);
-    max-width:44ch;
-  }
-  .hero-ctas{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    margin-top:30px;
-  }
-  .hero-ctas .btn{padding:16px 26px; font-size:0.95rem;}
-
-  /* Dispatch ticket card — signature element */
-  .ticket{
-    background:var(--asphalt-2);
-    border:1px solid var(--line);
-    border-radius:6px;
-    padding:24px;
-    position:relative;
-  }
-  .ticket::before{
-    content:"";
-    position:absolute;
-    top:0; left:0; right:0;
-    height:6px;
-    background: repeating-linear-gradient(
-      -45deg, var(--amber), var(--amber) 10px, var(--asphalt-2) 10px, var(--asphalt-2) 20px
-    );
-    border-radius:6px 6px 0 0;
-  }
-  .ticket-row{
-    display:flex;
-    justify-content:space-between;
-    padding:11px 0;
-    border-bottom:1px dashed var(--line);
-    font-size:0.85rem;
-  }
-  .ticket-row:last-child{border-bottom:none;}
-  .ticket-row .label{
-    font-family:'IBM Plex Mono';
-    font-size:0.68rem;
-    color:var(--paper-dim);
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-  }
-  .ticket-row .val{font-weight:600; color:var(--white); text-align:right;}
-  .ticket-head{
-    font-family:'IBM Plex Mono';
-    font-size:0.7rem;
-    color:var(--amber);
-    text-transform:uppercase;
-    letter-spacing:0.1em;
-    margin-bottom:4px;
-  }
-  .ticket-title{font-family:'Oswald'; font-size:1.1rem; color:var(--white); margin-bottom:14px; text-transform:uppercase;}
-
-  /* ---------- SECTION SCAFFOLD ---------- */
-  section{padding:64px 0;}
-  .section-head{
-    max-width:640px;
-    margin:0 0 40px;
-  }
-  .section-eyebrow{
-    font-family:'IBM Plex Mono';
-    font-size:0.72rem;
-    color:var(--amber-deep);
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    display:block;
-    margin-bottom:10px;
-  }
-  .section-head h2{
-    font-size:clamp(1.7rem, 3.4vw, 2.4rem);
-  }
-  .section-head p{color:#4a4d4f; margin-top:12px; font-size:1rem; max-width:56ch;}
-
-  /* ---------- SERVICES ---------- */
-  .services-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
-    gap:1px;
-    background:var(--paper-dim);
-    border:1px solid var(--paper-dim);
-  }
-  .service-card{
-    background:var(--paper);
-    padding:26px 22px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    transition:background .15s ease;
-  }
-  .service-card:hover{background:var(--white);}
-  .service-num{
-    font-family:'IBM Plex Mono';
-    font-size:0.72rem;
-    color:var(--amber-deep);
-  }
-  .service-card h3{
-    font-size:1.05rem;
-    font-weight:600;
-    text-transform:none;
-    letter-spacing:0;
-    font-family:'Inter';
-  }
-  .service-card p{font-size:0.88rem; color:#5a5d5f;}
-
-  /* ---------- WHY CHOOSE US ---------- */
-  .why-list{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
-    gap:24px;
-  }
-  .why-item{
-    display:flex;
-    gap:14px;
-    align-items:flex-start;
-  }
-  .why-item .icon{
-    flex:none;
-    width:38px; height:38px;
-    background:var(--asphalt);
-    color:var(--amber);
-    border-radius:6px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .why-item h4{font-family:'Oswald'; font-size:0.95rem; text-transform:uppercase; margin-bottom:4px;}
-  .why-item p{font-size:0.86rem; color:#5a5d5f;}
-
-  /* ---------- SERVICE AREA ---------- */
-  .area-section{background:var(--asphalt-2); color:var(--paper);}
-  .area-section .section-head p{color:var(--paper-dim);}
-  .area-section .section-eyebrow{color:var(--amber);}
-  .area-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
-    gap:1px;
-    background:var(--line);
-    border:1px solid var(--line);
-    border-radius:4px;
-    overflow:hidden;
-  }
-  .area-item{
-    background:var(--asphalt);
-    padding:18px 20px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    text-decoration:none;
-    color:var(--paper);
-    transition:background .15s ease;
-  }
-  .area-item:hover{background:#2f3134;}
-  .area-item .city{font-family:'Oswald'; font-size:0.95rem; text-transform:uppercase;}
-  .area-item .code{font-family:'IBM Plex Mono'; font-size:0.68rem; color:var(--amber);}
-  .area-note{margin-top:22px; font-size:0.85rem; color:var(--paper-dim);}
-
-  /* ---------- COMMERCIAL ---------- */
-  .commercial{
-    background:var(--paper);
-  }
-  .commercial-box{
-    background:var(--asphalt);
-    color:var(--paper);
-    border-radius:8px;
-    padding:44px 32px;
-    display:grid;
-    gap:28px;
-  }
-  @media(min-width:820px){
-    .commercial-box{grid-template-columns:1.2fr 0.8fr; align-items:center;}
-  }
-  .commercial-box h2{color:var(--white); font-size:clamp(1.5rem,3vw,2.1rem);}
-  .commercial-box p{color:var(--paper-dim); margin-top:14px; max-width:52ch;}
-  .commercial-tags{
-    display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;
-  }
-  .tag{
-    font-family:'IBM Plex Mono';
-    font-size:0.68rem;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    border:1px solid rgba(255,255,255,0.2);
-    color:var(--paper-dim);
-    padding:5px 10px;
-    border-radius:20px;
-  }
-
-  /* ---------- REVIEWS ---------- */
-  .reviews-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
-    gap:20px;
-  }
-  .review-card{
-    background:var(--white);
-    border:1px solid var(--paper-dim);
-    border-radius:6px;
-    padding:22px;
-  }
-  .stars{color:var(--amber); font-size:0.9rem; letter-spacing:2px; margin-bottom:10px;}
-  .review-card p{font-size:0.9rem; color:#33353a;}
-  .review-card .who{
-    margin-top:14px;
-    font-family:'IBM Plex Mono';
-    font-size:0.7rem;
-    color:#7a7d80;
-    text-transform:uppercase;
-  }
-
-  /* ---------- FOOTER / CONTACT ---------- */
-  footer{
-    background:var(--asphalt);
-    color:var(--paper-dim);
-    padding:56px 0 28px;
-  }
-  .footer-grid{
-    display:grid;
-    gap:32px;
-    grid-template-columns:1.3fr 1fr 1fr;
-  }
-  @media(max-width:760px){ .footer-grid{grid-template-columns:1fr;} }
-  .footer-grid h4{
-    font-family:'Oswald'; color:var(--white); font-size:0.9rem;
-    text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px;
-  }
-  .footer-grid a{
-    display:block; font-size:0.88rem; color:var(--paper-dim);
-    text-decoration:none; margin-bottom:8px;
-  }
-  .footer-grid a:hover{color:var(--amber);}
-  .footer-bottom{
-    margin-top:40px;
-    padding-top:20px;
-    border-top:1px solid var(--line);
-    font-family:'IBM Plex Mono';
-    font-size:0.72rem;
-    color:#7d8083;
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:10px;
-  }
-
-  /* ---------- MODAL FORM ---------- */
-  .modal-overlay{
-    position:fixed; inset:0;
-    background:rgba(15,16,17,0.72);
-    display:none;
-    align-items:flex-start;
-    justify-content:center;
-    padding:24px 16px 90px;
-    overflow-y:auto;
-    z-index:100;
-  }
-  .modal-overlay.open{display:flex;}
-  .modal{
-    background:var(--paper);
-    width:100%;
-    max-width:560px;
-    border-radius:8px;
-    margin-top:24px;
-    overflow:hidden;
-  }
-  .modal-head{
-    background:var(--asphalt);
-    color:var(--white);
-    padding:22px 24px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-  .modal-head h3{font-family:'Oswald'; text-transform:uppercase; font-size:1.15rem;}
-  .modal-head .sub{font-family:'IBM Plex Mono'; font-size:0.68rem; color:var(--amber); margin-top:4px; display:block;}
-  .modal-close{
-    background:transparent; border:none; color:var(--paper-dim);
-    font-size:1.4rem; cursor:pointer; line-height:1; padding:4px;
-  }
-  .modal-close:hover{color:var(--white);}
-  .modal-body{padding:24px;}
-  .form-row{margin-bottom:16px;}
-  .form-row label{
-    display:block;
-    font-family:'IBM Plex Mono';
-    font-size:0.68rem;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    color:#54575a;
-    margin-bottom:6px;
-  }
-  .form-row input, .form-row select, .form-row textarea{
-    width:100%;
-    padding:12px 14px;
-    border:1.5px solid var(--paper-dim);
-    border-radius:4px;
-    font-family:'Inter';
-    font-size:0.92rem;
-    background:var(--white);
-    color:var(--asphalt);
-  }
-  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{
-    outline:none;
-    border-color:var(--amber-deep);
-  }
-  .form-grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
-  @media(max-width:480px){ .form-grid-2{grid-template-columns:1fr;} }
-  .file-drop{
-    border:1.5px dashed var(--paper-dim);
-    border-radius:4px;
-    padding:16px;
-    text-align:center;
-    font-size:0.82rem;
-    color:#6b6e70;
-    background:var(--white);
-    cursor:pointer;
-  }
-  .file-drop:hover{border-color:var(--amber-deep);}
-  .form-submit{width:100%; margin-top:6px; padding:15px; font-size:0.95rem;}
-  .form-note{
-    font-size:0.76rem;
-    color:#7a7d80;
-    margin-top:12px;
-    line-height:1.5;
-  }
-  .confirm{
-    display:none;
-    text-align:center;
-    padding:40px 24px;
-  }
-  .confirm.open{display:block;}
-  .confirm .check{
-    width:56px; height:56px;
-    border-radius:50%;
-    background:var(--amber);
-    color:var(--asphalt);
-    display:flex; align-items:center; justify-content:center;
-    margin:0 auto 18px;
-    font-size:1.6rem;
-    font-weight:700;
-  }
-  .confirm h3{font-family:'Oswald'; text-transform:uppercase; font-size:1.3rem; margin-bottom:10px;}
-  .confirm p{font-size:0.92rem; color:#5a5d5f; max-width:38ch; margin:0 auto;}
-  .confirm .ticket-id{
-    margin-top:18px;
-    font-family:'IBM Plex Mono';
-    font-size:0.78rem;
-    color:var(--amber-deep);
-    background:#e4f1fa;
-    display:inline-block;
-    padding:8px 14px;
-    border-radius:4px;
-  }
-
-  /* Visible focus states for accessibility */
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
-    outline:2px solid var(--amber);
-    outline-offset:2px;
-  }
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none !important; transition:none !important;}
-  }
-</style>
-</head>
-<body>
-
-<!-- ================= HEADER ================= -->
-<header>
-  <div class="header-inner">
-    <div class="brand">
-      <div class="mark">Shifflett<span>&nbsp;Towing</span> &amp; Recovery</div>
-      <div class="tagline">24/7 Dispatch · Montgomery &amp; Frederick County, MD</div>
-    </div>
-    <div class="header-actions">
-      <a href="tel:+12407788634" class="btn btn-alert btn-sm">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        Call Now
-      </a>
-      <button class="btn btn-amber btn-sm" onclick="openModal()">Request a Tow</button>
-    </div>
-  </div>
-</header>
-<div class="chevrons"></div>
-
-<!-- ================= HERO ================= -->
-<section class="hero" style="padding:0;">
-  <div class="hero-inner">
-    <div>
-      <div class="ticket-eyebrow"><span class="dot"></span> Dispatch is standing by</div>
-      <h1>24/7 Towing &amp; <em>Roadside Assistance</em></h1>
-      <p class="lead">Fast, reliable towing and recovery across Montgomery County, Frederick County, and the surrounding Maryland counties — from a flat on the Beltway to a job that needs a flatbed at 3&nbsp;AM. One call and a truck is rolling.</p>
-      <div class="hero-ctas">
-        <button class="btn btn-amber" onclick="openModal()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4l6 6-8.5 8.5a1 1 0 0 1-.7.3H4v-6.8a1 1 0 0 1 .3-.7L14 4z"/><path d="M13 5l6 6"/></svg>
-          Request a Tow
-        </button>
-        <a href="tel:+12407788634" class="btn btn-alert">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Call (240) 778-8634
-        </a>
-      </div>
-    </div>
-
-    <!-- Signature dispatch-ticket element -->
-    <div class="ticket">
-      <div class="ticket-head">Work Order Preview</div>
-      <div class="ticket-title">What Dispatch Sees</div>
-      <div class="ticket-row"><span class="label">Service</span><span class="val">Flatbed Tow</span></div>
-      <div class="ticket-row"><span class="label">Pickup</span><span class="val">Rockville Pike</span></div>
-      <div class="ticket-row"><span class="label">Destination</span><span class="val">Certified Collision Ctr</span></div>
-      <div class="ticket-row"><span class="label">ETA</span><span class="val" style="color:var(--amber);">18 min</span></div>
-      <div class="ticket-row"><span class="label">Status</span><span class="val" style="color:var(--amber);">Driver En Route</span></div>
-    </div>
-  </div>
-</section>
-<div class="chevrons alert"></div>
-
-<!-- ================= SERVICES ================= -->
-<section id="services">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="section-eyebrow">What We Run</span>
-      <h2>Our Services</h2>
-      <p>Every truck is dispatched to the job that fits it — no guessing, no upsells you didn't ask for.</p>
-    </div>
-    <div class="services-grid">
-      <div class="service-card"><span class="service-num">01</span><h3>Towing</h3><p>Local and long-distance towing for cars, SUVs, and light trucks.</p></div>
-      <div class="service-card"><span class="service-num">02</span><h3>Roadside Assistance</h3><p>On-scene help so you're not stuck waiting for a full tow.</p></div>
-      <div class="service-card"><span class="service-num">03</span><h3>Jump Starts</h3><p>Dead battery gets you moving again in minutes.</p></div>
-      <div class="service-card"><span class="service-num">04</span><h3>Tire Changes</h3><p>Flat swapped for your spare, roadside or in a lot.</p></div>
-      <div class="service-card"><span class="service-num">05</span><h3>Vehicle Lockouts</h3><p>Locked out? We get you back in without damage.</p></div>
-      <div class="service-card"><span class="service-num">06</span><h3>Fuel Delivery</h3><p>Ran out of gas? We bring enough to get you to a station.</p></div>
-      <div class="service-card"><span class="service-num">07</span><h3>Winch &amp; Recovery</h3><p>Stuck in a ditch, mud, or snow — we winch you out safely.</p></div>
-      <div class="service-card"><span class="service-num">08</span><h3>Accident Recovery</h3><p>Careful, insurance-ready recovery from a collision scene.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= WHY CHOOSE US ================= -->
-<section style="background:var(--white); border-top:1px solid var(--paper-dim); border-bottom:1px solid var(--paper-dim);">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="section-eyebrow">Why Shifflett</span>
-      <h2>Why Choose Us</h2>
-    </div>
-    <div class="why-list">
-      <div class="why-item">
-        <div class="icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        </div>
-        <div><h4>24/7 Availability</h4><p>Dispatch never closes — nights, weekends, holidays.</p></div>
-      </div>
-      <div class="why-item">
-        <div class="icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z"/></svg>
-        </div>
-        <div><h4>Fast Response</h4><p>Trucks positioned across the county to keep ETAs short.</p></div>
-      </div>
-      <div class="why-item">
-        <div class="icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
-        </div>
-        <div><h4>Licensed &amp; Insured</h4><p>Fully licensed operation with commercial insurance on every job.</p></div>
-      </div>
-      <div class="why-item">
-        <div class="icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-        <div><h4>Professional Drivers</h4><p>Trained operators who treat your vehicle like their own.</p></div>
-      </div>
-      <div class="why-item">
-        <div class="icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div><h4>Upfront Pricing</h4><p>You get a real number from dispatch before a truck rolls.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= SERVICE AREA ================= -->
-<section class="area-section" id="service-area">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="section-eyebrow">Coverage</span>
-      <h2>Service Area</h2>
-      <p>Based in Montgomery County and running throughout the surrounding area.</p>
-    </div>
-    <div class="area-grid">
-      <a class="area-item" href="#"><span class="city">Gaithersburg</span><span class="code">MD</span></a>
-      <a class="area-item" href="#"><span class="city">Rockville</span><span class="code">MD</span></a>
-      <a class="area-item" href="#"><span class="city">Silver Spring</span><span class="code">MD</span></a>
-      <a class="area-item" href="#"><span class="city">Bethesda</span><span class="code">MD</span></a>
-      <a class="area-item" href="#"><span class="city">Germantown</span><span class="code">MD</span></a>
-      <a class="area-item" href="#"><span class="city">Frederick</span><span class="code">MD</span></a>
-    </div>
-    <p class="area-note">Don't see your area listed? Call dispatch — we frequently run jobs outside our core coverage map.</p>
-  </div>
-</section>
-
-<!-- ================= COMMERCIAL ================= -->
-<section class="commercial" id="commercial">
-  <div class="wrap">
-    <div class="commercial-box">
-      <div>
-        <span class="section-eyebrow" style="color:var(--amber);">Commercial &amp; Fleet Accounts</span>
-        <h2>Need Reliable Towing for Your Business?</h2>
-        <p>Set up a standing account for recurring or priority towing — dealerships, repair shops, property managers, and fleets all run through the same fast dispatch line.</p>
-        <div class="commercial-tags">
-          <span class="tag">Dealerships</span>
-          <span class="tag">Repair Shops</span>
-          <span class="tag">Apartment / Property Mgmt</span>
-          <span class="tag">Police &amp; Municipal</span>
-          <span class="tag">Insurance / Roadside</span>
-          <span class="tag">Fleet Companies</span>
-        </div>
-      </div>
-      <div>
-        <button class="btn btn-amber" style="width:100%;" onclick="alert('Commercial account application — build this as its own form next.')">Apply for an Account</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= REVIEWS ================= -->
-<section style="background:var(--white); border-top:1px solid var(--paper-dim);">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="section-eyebrow">From the Road</span>
-      <h2>What Drivers Say</h2>
-    </div>
-    <div class="reviews-grid">
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>Called at 11pm with a dead battery in a parking garage. Truck showed up faster than I expected and got me going again.</p>
-        <div class="who">Google Review — Placeholder</div>
-      </div>
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>Locked out of my car downtown. Driver was careful, fast, and didn't scratch a thing.</p>
-        <div class="who">Google Review — Placeholder</div>
-      </div>
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>We use them for our dealership's overflow tows. Dispatch is easy to reach and drivers show up on time.</p>
-        <div class="who">Google Review — Placeholder</div>
-      </div>
-    </div>
-    <p class="form-note" style="margin-top:20px;">Live Google reviews get embedded here once connected.</p>
-  </div>
-</section>
-
-<!-- ================= FOOTER / CONTACT ================= -->
-<footer id="contact">
-  <div class="wrap">
-    <div class="footer-grid">
-      <div>
-        <h4>Shifflett Towing &amp; Recovery</h4>
-        <p style="font-size:0.88rem; margin-bottom:14px;">24/7 towing and roadside assistance throughout Montgomery County, Frederick County, and the surrounding Maryland area.</p>
-        <a href="tel:+12407788634">(240) 778-8634</a>
-        <a href="mailto:dispatch@shiffletttowing.com">dispatch@shiffletttowing.com</a>
-      </div>
-      <div>
-        <h4>Company</h4>
-        <a href="#services">Services</a>
-        <a href="#service-area">Service Area</a>
-        <a href="#commercial">Commercial Accounts</a>
-        <a href="#">Our Fleet</a>
-      </div>
-      <div>
-        <h4>Get Help Now</h4>
-        <button class="btn btn-amber btn-sm" style="width:100%; margin-bottom:10px;" onclick="openModal()">Request a Tow</button>
-        <a href="tel:+12407788634" class="btn btn-alert btn-sm" style="width:100%;">Call Now</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>&copy; 2026 Shifflett Towing &amp; Recovery. Licensed &amp; insured.</span>
-      <span>Prototype build — not a live site</span>
-    </div>
-  </div>
-</footer>
-
-<!-- ================= MOBILE STICKY BAR ================= -->
-<div class="sticky-bar">
-  <a href="tel:+12407788634" class="btn btn-alert">Call Now</a>
-  <button class="btn btn-amber" onclick="openModal()">Request a Tow</button>
-</div>
-
-<!-- ================= REQUEST A TOW MODAL ================= -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-head">
-      <div>
-        <h3>Request a Tow</h3>
-        <span class="sub">Goes straight to dispatch</span>
-      </div>
-      <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
-    </div>
-
-    <div class="modal-body" id="formView">
-      <form id="towForm" onsubmit="return submitForm(event)">
-        <div class="form-row">
-          <label for="name">Full Name</label>
-          <input type="text" id="name" required placeholder="Jordan Smith">
-        </div>
-        <div class="form-row">
-          <label for="phone">Phone Number</label>
-          <input type="tel" id="phone" required placeholder="(301) 555-0100">
-        </div>
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label for="pickup">Pickup Location</label>
-            <input type="text" id="pickup" required placeholder="Address or cross streets">
-          </div>
-          <div class="form-row">
-            <label for="destination">Destination</label>
-            <input type="text" id="destination" placeholder="Shop, home, or 'not sure yet'">
-          </div>
-        </div>
-        <div class="form-row">
-          <label for="vehicle">Vehicle Type</label>
-          <select id="vehicle" required>
-            <option value="">Select one</option>
-            <option>Sedan / Car</option>
-            <option>SUV / Crossover</option>
-            <option>Pickup Truck</option>
-            <option>Van</option>
-            <option>Motorcycle</option>
-            <option>Other / Not Sure</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label for="details">What Happened</label>
-          <textarea id="details" rows="3" required placeholder="Flat tire, accident, won't start, locked out, etc."></textarea>
-        </div>
-        <div class="form-row">
-          <label for="photo">Photo (optional)</label>
-          <label class="file-drop" for="photo" id="fileDropLabel">Tap to add a photo of the vehicle or scene</label>
-          <input type="file" id="photo" accept="image/*" style="display:none;" onchange="updateFileLabel()">
-        </div>
-        <button type="submit" class="btn btn-alert form-submit">Send Request to Dispatch</button>
-        <p class="form-note">This demo form doesn't yet connect to a live dispatcher. In production this submits straight to SMS/email so dispatch is notified within seconds.</p>
-      </form>
-    </div>
-
-    <div class="confirm" id="confirmView">
-      <div class="check">✓</div>
-      <h3>Request Sent</h3>
-      <p>Dispatch has your info and is confirming a driver now. Keep your phone nearby — we'll call from (240) 778-8634.</p>
-      <div class="ticket-id" id="ticketId">TICKET #— </div>
-      <div style="margin-top:24px;">
-        <button class="btn btn-outline" style="border-color:var(--paper-dim); color:var(--asphalt);" onclick="closeModal()">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  function openModal(){
-    document.getElementById('modalOverlay').classList.add('open');
-    document.getElementById('formView').style.display = 'block';
-    document.getElementById('confirmView').classList.remove('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal(){
-    document.getElementById('modalOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-    document.getElementById('towForm').reset();
-    updateFileLabel();
-  }
-  document.getElementById('modalOverlay').addEventListener('click', function(e){
-    if(e.target === this){ closeModal(); }
+// build a flat lookup of every player -> {teamAbbr, slot, index}
+function buildIndex() {
+  const list = [];
+  TEAMS.forEach((t) => {
+    SLOTS.forEach((s) => {
+      t[s.key].forEach((name, i) => {
+        list.push({ id: `${t.abbr}-${s.key}-${i}`, name, team: t.abbr, slot: s.key, idx: i, norm: normalize(name) });
+      });
+    });
   });
-  function updateFileLabel(){
-    const input = document.getElementById('photo');
-    const label = document.getElementById('fileDropLabel');
-    if(input.files && input.files.length > 0){
-      label.textContent = input.files[0].name;
-    } else {
-      label.textContent = 'Tap to add a photo of the vehicle or scene';
-    }
-  }
-  function submitForm(e){
-    e.preventDefault();
-    // In production: POST this payload to a backend that texts/emails dispatch immediately.
-    const ticket = Math.floor(1000 + Math.random()*9000);
-    document.getElementById('ticketId').textContent = 'TICKET #' + ticket;
-    document.getElementById('formView').style.display = 'none';
-    document.getElementById('confirmView').classList.add('open');
-    return false;
-  }
-</script>
+  return list;
+}
 
-</body>
-</html>
+const PLAYER_INDEX = buildIndex();
+
+const POS_TABS = ["ALL", "QB", "RB", "WR", "TE"];
+
+const BASE_ROSTER_SLOTS = [
+  { label: "QB", pos: ["qb"] },
+  { label: "RB", pos: ["rb"] },
+  { label: "RB", pos: ["rb"] },
+  { label: "WR", pos: ["wr"] },
+  { label: "WR", pos: ["wr"] },
+  { label: "TE", pos: ["te"] },
+  { label: "FLEX", pos: ["rb", "wr", "te"] },
+];
+const BENCH_MIN = 6;
+
+function teamColor(abbr) {
+  return TEAMS.find((t) => t.abbr === abbr)?.c1 || "#999999";
+}
+
+export default function DraftWall() {
+  const [drafted, setDrafted] = useState({}); // id -> true
+  const [myPicks, setMyPicks] = useState([]); // ordered array of player ids
+  const [input, setInput] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [myInput, setMyInput] = useState("");
+  const [mySuggestions, setMySuggestions] = useState([]);
+  const [flash, setFlash] = useState(null); // {type:'ok'|'miss', text}
+  const [filter, setFilter] = useState("");
+  const [posTab, setPosTab] = useState("ALL");
+  const [loaded, setLoaded] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const inputRef = useRef(null);
+  const myInputRef = useRef(null);
+  const saveTimer = useRef(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await window.storage.get(STORAGE_KEY);
+        if (res && res.value) {
+          const parsed = JSON.parse(res.value);
+          if (parsed && (parsed.drafted || parsed.myPicks)) {
+            setDrafted(parsed.drafted || {});
+            setMyPicks(parsed.myPicks || []);
+          } else {
+            // backward compatibility with the older plain-map format
+            setDrafted(parsed || {});
+          }
+        }
+      } catch (e) {}
+      setLoaded(true);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await window.storage.set(STORAGE_KEY, JSON.stringify({ drafted, myPicks }));
+      } catch (e) {}
+    }, 300);
+    return () => clearTimeout(saveTimer.current);
+  }, [drafted, myPicks, loaded]);
+
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 2200);
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  const draftedCount = Object.keys(drafted).filter((k) => drafted[k]).length;
+
+  const handleInputChange = (v) => {
+    setInput(v);
+    if (!v.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const n = normalize(v);
+    const matches = PLAYER_INDEX.filter((p) => !drafted[p.id] && p.norm.includes(n)).slice(0, 6);
+    setSuggestions(matches);
+  };
+
+  const markPlayer = (player) => {
+    if (!player) return;
+    setDrafted((prev) => ({ ...prev, [player.id]: true }));
+    setFlash({ type: "ok", text: `${player.name} — ${player.team}` });
+    setInput("");
+    setSuggestions([]);
+    inputRef.current?.focus();
+  };
+
+  const submit = () => {
+    if (!input.trim()) return;
+    const n = normalize(input);
+    let match = PLAYER_INDEX.find((p) => p.norm === n && !drafted[p.id]);
+    if (!match) match = PLAYER_INDEX.find((p) => p.norm.includes(n) && !drafted[p.id]);
+    if (match) {
+      markPlayer(match);
+    } else {
+      setFlash({ type: "miss", text: `No match for "${input}"` });
+      setInput("");
+      setSuggestions([]);
+    }
+  };
+
+  const toggle = (player) => {
+    setDrafted((prev) => {
+      const next = { ...prev };
+      if (next[player.id]) delete next[player.id];
+      else next[player.id] = true;
+      return next;
+    });
+  };
+
+  const handleMyInputChange = (v) => {
+    setMyInput(v);
+    if (!v.trim()) {
+      setMySuggestions([]);
+      return;
+    }
+    const n = normalize(v);
+    const matches = PLAYER_INDEX.filter((p) => !drafted[p.id] && p.norm.includes(n)).slice(0, 6);
+    setMySuggestions(matches);
+  };
+
+  const addToMyTeam = (player) => {
+    if (!player) return;
+    setDrafted((prev) => ({ ...prev, [player.id]: true }));
+    setMyPicks((prev) => (prev.includes(player.id) ? prev : [...prev, player.id]));
+    setFlash({ type: "ok", text: `${player.name} added to your team` });
+    setMyInput("");
+    setMySuggestions([]);
+    myInputRef.current?.focus();
+  };
+
+  const submitMy = () => {
+    if (!myInput.trim()) return;
+    const n = normalize(myInput);
+    let match = PLAYER_INDEX.find((p) => p.norm === n && !drafted[p.id]);
+    if (!match) match = PLAYER_INDEX.find((p) => p.norm.includes(n) && !drafted[p.id]);
+    if (match) {
+      addToMyTeam(match);
+    } else {
+      setFlash({ type: "miss", text: `No match for "${myInput}"` });
+      setMyInput("");
+      setMySuggestions([]);
+    }
+  };
+
+  const removeFromMyTeam = (id) => {
+    setMyPicks((prev) => prev.filter((pid) => pid !== id));
+    setDrafted((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const myPlayers = useMemo(
+    () => myPicks.map((id) => PLAYER_INDEX.find((p) => p.id === id)).filter(Boolean),
+    [myPicks]
+  );
+
+  const roster = useMemo(() => {
+    const slots = BASE_ROSTER_SLOTS.map((s) => ({ ...s, player: null }));
+    const bench = [];
+    myPlayers.forEach((p) => {
+      const slot = slots.find((s) => !s.player && s.pos.includes(p.slot));
+      if (slot) slot.player = p;
+      else bench.push(p);
+    });
+    while (bench.length < BENCH_MIN) bench.push(null);
+    return { slots, bench };
+  }, [myPlayers]);
+
+  const doReset = () => {
+    setDrafted({});
+    setMyPicks([]);
+    setConfirmReset(false);
+  };
+
+  const visibleTeams = useMemo(() => {
+    if (!filter.trim()) return TEAMS;
+    const f = filter.trim().toLowerCase();
+    return TEAMS.filter((t) => t.abbr.toLowerCase().includes(f) || t.name.toLowerCase().includes(f));
+  }, [filter]);
+
+  return (
+    <div style={styles.app}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+        * { box-sizing: border-box; }
+        .dw-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .dw-scroll::-webkit-scrollbar-thumb { background: #CCCCCC; border-radius: 4px; }
+        .dw-name { cursor: pointer; transition: color .12s ease; }
+        .dw-name:hover { filter: brightness(1.3); }
+        .dw-card { transition: transform .12s ease, box-shadow .12s ease; }
+        .dw-card:hover { transform: translateY(-2px); }
+        .dw-sugg:hover { background: #EFEFEF; }
+        input:focus { outline: none; }
+        @keyframes flashIn { 0% { opacity:0; transform: translateY(-4px);} 100% {opacity:1; transform:translateY(0);} }
+        .dw-flash { animation: flashIn .18s ease; }
+      `}</style>
+
+      <div style={styles.headerRow}>
+        <div>
+          <h1 style={styles.h1}>DRAFT WALL</h1>
+          <div style={styles.subtitle}>32 teams · reference board · type a name, hit enter</div>
+        </div>
+        <div style={styles.headerRight}>
+          <div style={styles.counter}>
+            {draftedCount} <span style={{ color: FAINT }}>/ {PLAYER_INDEX.length} drafted</span>
+          </div>
+          {!confirmReset ? (
+            <button className="dw-name" style={styles.resetBtn} onClick={() => setConfirmReset(true)}>
+              <RotateCcw size={14} /> Reset
+            </button>
+          ) : (
+            <div style={{ display: "flex", gap: 6 }}>
+              <button style={{ ...styles.resetBtn, background: RED, color: "#fff", borderColor: RED }} onClick={doReset}>
+                Clear board
+              </button>
+              <button style={styles.resetBtn} onClick={() => setConfirmReset(false)}>
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={styles.inputRow}>
+        <div style={styles.inputWrap}>
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submit();
+              if (e.key === "Escape") {
+                setInput("");
+                setSuggestions([]);
+              }
+            }}
+            placeholder="Type a drafted player's name and press Enter…"
+            style={styles.mainInput}
+          />
+          {input && (
+            <X
+              size={16}
+              color={FAINT}
+              style={{ cursor: "pointer", flexShrink: 0 }}
+              onClick={() => {
+                setInput("");
+                setSuggestions([]);
+              }}
+            />
+          )}
+          {suggestions.length > 0 && (
+            <div style={styles.suggBox}>
+              {suggestions.map((s) => (
+                <div key={s.id} className="dw-sugg" style={styles.suggItem} onClick={() => markPlayer(s)}>
+                  <span style={{ fontWeight: 600 }}>{s.name}</span>
+                  <span style={{ color: FAINT, fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>
+                    {s.team} · {s.slot.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={styles.filterWrap}>
+          <Search size={13} color={FAINT} />
+          <input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Jump to team…"
+            style={styles.filterInput}
+          />
+        </div>
+      </div>
+
+      {flash && (
+        <div className="dw-flash" style={{ ...styles.flashBar, borderColor: flash.type === "ok" ? "#3FDB86" : RED }}>
+          {flash.type === "ok" ? "✓ marked drafted — " : "✕ "} {flash.text}
+        </div>
+      )}
+
+      <div style={styles.tabs}>
+        {POS_TABS.map((p) => (
+          <button
+            key={p}
+            onClick={() => setPosTab(p)}
+            style={{
+              ...styles.tab,
+              background: posTab === p ? "#111111" : "transparent",
+              color: posTab === p ? "#FFFFFF" : DIM,
+              borderColor: posTab === p ? "#111111" : BORDER,
+            }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <div style={styles.grid}>
+        {visibleTeams.map((t) => {
+          const headerText = textOn(t.c1);
+          return (
+            <div key={t.abbr} className="dw-card" style={{ ...styles.card, borderColor: t.c1 + "55" }}>
+              <div style={{ ...styles.cardHeader, background: t.c1, borderBottom: `3px solid ${t.c2}` }}>
+                <span style={{ ...styles.cardAbbr, color: headerText }}>{t.abbr}</span>
+                <span style={{ ...styles.cardName, color: headerText }}>{t.name}</span>
+              </div>
+              <div style={styles.cardBody}>
+                {SLOTS.filter((s) => posTab === "ALL" || s.key === posTab.toLowerCase()).map((s) => (
+                  <div key={s.key} style={styles.slotRow}>
+                    <span style={styles.slotLabel}>{s.label}</span>
+                    <div style={styles.slotNames}>
+                      {t[s.key].map((name, i) => {
+                        const id = `${t.abbr}-${s.key}-${i}`;
+                        const isDrafted = !!drafted[id];
+                        return (
+                          <span
+                            key={id}
+                            className="dw-name"
+                            onClick={() => toggle({ id, name, team: t.abbr })}
+                            title={isDrafted ? "Click to undo" : "Click to mark drafted"}
+                            style={{
+                              ...styles.playerName,
+                              color: isDrafted ? RED : TEXT,
+                              textDecoration: isDrafted ? "line-through" : "none",
+                              opacity: isDrafted ? 0.85 : 1,
+                            }}
+                          >
+                            {name}
+                            {i < t[s.key].length - 1 ? <span style={styles.slashDim}> / </span> : null}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={styles.myTeamSection}>
+        <div style={styles.myTeamHeader}>
+          <h2 style={styles.h2}>MY TEAM</h2>
+          <span style={styles.subtitle}>{myPlayers.length} picked</span>
+        </div>
+
+        <div style={styles.myInputWrap}>
+          <input
+            ref={myInputRef}
+            value={myInput}
+            onChange={(e) => handleMyInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitMy();
+              if (e.key === "Escape") {
+                setMyInput("");
+                setMySuggestions([]);
+              }
+            }}
+            placeholder="Type a player you drafted and press Enter…"
+            style={styles.mainInput}
+          />
+          {myInput && (
+            <X
+              size={16}
+              color={FAINT}
+              style={{ cursor: "pointer", flexShrink: 0 }}
+              onClick={() => {
+                setMyInput("");
+                setMySuggestions([]);
+              }}
+            />
+          )}
+          {mySuggestions.length > 0 && (
+            <div style={styles.suggBox}>
+              {mySuggestions.map((s) => (
+                <div key={s.id} className="dw-sugg" style={styles.suggItem} onClick={() => addToMyTeam(s)}>
+                  <span style={{ fontWeight: 600 }}>{s.name}</span>
+                  <span style={{ color: FAINT, fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>
+                    {s.team} · {s.slot.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={styles.rosterList}>
+          {roster.slots.map((s, i) => (
+            <div key={`start-${i}`} style={styles.rosterRow}>
+              <span style={styles.rosterSlotLabel}>{s.label}</span>
+              {s.player ? (
+                <div
+                  className="dw-name"
+                  style={styles.rosterPlayer}
+                  onClick={() => removeFromMyTeam(s.player.id)}
+                  title="Click to remove"
+                >
+                  <span style={{ ...styles.rosterSwatch, background: teamColor(s.player.team) }} />
+                  <span style={styles.rosterName}>{s.player.name}</span>
+                  <span style={styles.rosterTeam}>{s.player.team}</span>
+                </div>
+              ) : (
+                <span style={styles.rosterEmpty}>Empty</span>
+              )}
+            </div>
+          ))}
+          {roster.bench.map((p, i) => (
+            <div key={`bn-${i}`} style={styles.rosterRow}>
+              <span style={styles.rosterSlotLabel}>BN</span>
+              {p ? (
+                <div
+                  className="dw-name"
+                  style={styles.rosterPlayer}
+                  onClick={() => removeFromMyTeam(p.id)}
+                  title="Click to remove"
+                >
+                  <span style={{ ...styles.rosterSwatch, background: teamColor(p.team) }} />
+                  <span style={styles.rosterName}>{p.name}</span>
+                  <span style={styles.rosterTeam}>{p.team}</span>
+                </div>
+              ) : (
+                <span style={styles.rosterEmpty}>Empty</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  app: {
+    background: BG,
+    color: TEXT,
+    fontFamily: "Inter, sans-serif",
+    minHeight: "100%",
+    padding: "20px 18px 36px",
+    borderRadius: 12,
+  },
+  headerRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 16,
+  },
+  h1: {
+    fontFamily: "Oswald, sans-serif",
+    fontWeight: 700,
+    fontSize: 30,
+    letterSpacing: "1.5px",
+    margin: 0,
+  },
+  subtitle: {
+    color: DIM,
+    fontSize: 12.5,
+    fontFamily: "JetBrains Mono, monospace",
+    marginTop: 2,
+  },
+  headerRight: { display: "flex", alignItems: "center", gap: 14 },
+  counter: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 15,
+    fontWeight: 700,
+    color: TEXT,
+  },
+  resetBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "transparent",
+    border: `1px solid ${BORDER}`,
+    color: DIM,
+    borderRadius: 7,
+    padding: "7px 12px",
+    fontSize: 12.5,
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+  },
+  inputRow: { display: "flex", gap: 10, marginBottom: 10, flexWrap: "wrap" },
+  inputWrap: {
+    position: "relative",
+    flex: 1,
+    minWidth: 280,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 9,
+    padding: "12px 14px",
+  },
+  mainInput: {
+    background: "transparent",
+    border: "none",
+    color: TEXT,
+    fontSize: 15,
+    flex: 1,
+    fontFamily: "Inter, sans-serif",
+  },
+  suggBox: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    right: 0,
+    background: "#FFFFFF",
+    border: `1px solid ${BORDER}`,
+    borderRadius: 8,
+    overflow: "hidden",
+    zIndex: 10,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  },
+  suggItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "9px 14px",
+    cursor: "pointer",
+    fontSize: 13.5,
+  },
+  filterWrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 9,
+    padding: "10px 12px",
+    width: 180,
+  },
+  filterInput: {
+    background: "transparent",
+    border: "none",
+    color: TEXT,
+    fontSize: 13,
+    width: "100%",
+    fontFamily: "Inter, sans-serif",
+  },
+  flashBar: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 12.5,
+    color: DIM,
+    border: "1px solid",
+    borderRadius: 7,
+    padding: "6px 12px",
+    marginBottom: 12,
+    display: "inline-block",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 12,
+  },
+  card: {
+    background: PANEL,
+    border: "1px solid",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  cardHeader: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 8,
+    padding: "9px 12px",
+  },
+  cardAbbr: {
+    fontFamily: "Oswald, sans-serif",
+    fontWeight: 700,
+    fontSize: 17,
+    letterSpacing: "0.5px",
+  },
+  cardName: {
+    fontFamily: "Inter, sans-serif",
+    fontSize: 11.5,
+    opacity: 0.85,
+  },
+  cardBody: { padding: "10px 12px 12px" },
+  slotRow: { display: "flex", gap: 10, padding: "4px 0", alignItems: "baseline" },
+  slotLabel: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 10.5,
+    fontWeight: 700,
+    width: 26,
+    flexShrink: 0,
+    color: "#000000",
+  },
+  tabs: { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
+  tab: {
+    border: "1px solid",
+    borderRadius: 20,
+    padding: "6px 16px",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+    fontFamily: "JetBrains Mono, monospace",
+    letterSpacing: "0.5px",
+  },
+  slotNames: { display: "flex", flexWrap: "wrap", fontSize: 12.5, lineHeight: 1.5 },
+  playerName: { fontFamily: "Inter, sans-serif" },
+  slashDim: { color: FAINT },
+  myTeamSection: {
+    marginTop: 36,
+    paddingTop: 24,
+    borderTop: `1px solid ${BORDER}`,
+  },
+  myTeamHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 14,
+  },
+  h2: {
+    fontFamily: "Oswald, sans-serif",
+    fontWeight: 700,
+    fontSize: 22,
+    letterSpacing: "1px",
+    margin: 0,
+  },
+  myInputWrap: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 9,
+    padding: "12px 14px",
+    marginBottom: 16,
+    maxWidth: 480,
+  },
+  rosterList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 7,
+    maxWidth: 480,
+  },
+  rosterRow: { display: "flex", alignItems: "center", gap: 10 },
+  rosterSlotLabel: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontWeight: 700,
+    fontSize: 11,
+    width: 38,
+    flexShrink: 0,
+    color: "#000000",
+  },
+  rosterPlayer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    flex: 1,
+    background: PANEL,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 8,
+    padding: "9px 12px",
+    cursor: "pointer",
+  },
+  rosterSwatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+    flexShrink: 0,
+  },
+  rosterName: { fontSize: 13.5, fontWeight: 600, flex: 1, color: TEXT },
+  rosterTeam: {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 11,
+    color: FAINT,
+  },
+  rosterEmpty: {
+    flex: 1,
+    fontSize: 13,
+    color: FAINT,
+    fontStyle: "italic",
+    border: `1px dashed ${BORDER}`,
+    borderRadius: 8,
+    padding: "9px 12px",
+  },
+};
