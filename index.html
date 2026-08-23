@@ -1,5 +1,73 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { Search, RotateCcw, X } from "lucide-react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Draft Wall</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #FFFFFF; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.28.4/babel.min.js" crossorigin></script>
+
+<script>
+  // Local storage-backed polyfill so picks persist on a real deployed site
+  // (mirrors the get/set/delete/list shape used by the component)
+  window.storage = {
+    async get(key) {
+      const v = localStorage.getItem(key);
+      if (v === null) throw new Error("not found");
+      return { key, value: v, shared: false };
+    },
+    async set(key, value) {
+      localStorage.setItem(key, value);
+      return { key, value, shared: false };
+    },
+    async delete(key) {
+      localStorage.removeItem(key);
+      return { key, deleted: true, shared: false };
+    },
+    async list(prefix) {
+      const keys = Object.keys(localStorage).filter((k) => !prefix || k.startsWith(prefix));
+      return { keys, prefix, shared: false };
+    },
+  };
+</script>
+
+<script type="text/babel" data-presets="react" data-type="module">
+const { useState, useEffect, useRef, useMemo } = React;
+
+function Search({ size = 14, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  );
+}
+function RotateCcw({ size = 14, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="1 4 1 10 7 10"></polyline>
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+    </svg>
+  );
+}
+function X({ size = 14, color = "currentColor", style, onClick, title }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style} onClick={onClick}>
+      {title ? <title>{title}</title> : null}
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  );
+}
 
 // ---------- Team data (2026 depth charts: 2 QB, 3 RB, 4 WR, 2 TE per team) ----------
 const TEAMS = [
@@ -103,7 +171,7 @@ function teamColor(abbr) {
   return TEAMS.find((t) => t.abbr === abbr)?.c1 || "#999999";
 }
 
-export default function DraftWall() {
+function DraftWall() {
   const [drafted, setDrafted] = useState({}); // id -> true
   const [myPicks, setMyPicks] = useState([]); // ordered array of player ids
   const [input, setInput] = useState("");
@@ -773,3 +841,10 @@ const styles = {
     padding: "9px 12px",
   },
 };
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<DraftWall />);
+
+</script>
+</body>
+</html>
