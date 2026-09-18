@@ -438,6 +438,18 @@
     margin-bottom:16px;
     box-shadow:var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.5);
   }
+  .matchup-card.free-floating{
+    box-shadow:0 12px 32px rgba(0,0,0,0.3);
+    margin-bottom:0;
+  }
+  .matchup-drag-handle{
+    width:14px;height:14px;
+    flex:none;
+    color:var(--ink-dim);
+    opacity:0.6;
+    cursor:grab;
+  }
+  .matchup-drag-handle:active{ cursor:grabbing; }
   .matchup-header{
     display:flex;
     align-items:center;
@@ -3018,14 +3030,15 @@ function matchupCardHtml(away, home){
     : '';
   const cardId = `${away.id}-${home.id}`;
   return `
-    <div class="matchup-card">
+    <div class="matchup-card" id="matchup-card-${cardId}">
       <div class="matchup-header clickable" onclick="toggleMatchupCard('${cardId}')">
+        <svg class="matchup-drag-handle" viewBox="0 0 24 24" fill="currentColor" onmousedown="startFreeDrag(event,'${cardId}')"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>
         <div class="matchup-team-label"><span class="wk-team-dot" style="background:${away.color}"></span>${away.name}</div>
         <div class="matchup-vs">@</div>
         <div class="matchup-team-label"><span class="wk-team-dot" style="background:${home.color}"></span>${home.name}</div>
-        <svg class="matchup-chevron" id="matchup-chevron-${cardId}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <svg class="matchup-chevron" id="matchup-chevron-${cardId}" style="transform:rotate(-90deg);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
-      <div class="matchup-body" id="matchup-body-${cardId}">
+      <div class="matchup-body" id="matchup-body-${cardId}" style="display:none;">
         ${weekNote ? `<p class="matchup-week-note">${weekNote}</p>` : ''}
         <div class="matchup-depth-cols">
           <div class="depth-col">
@@ -3042,6 +3055,71 @@ function matchupCardHtml(away, home){
       </div>
     </div>
   `;
+}
+
+let freeDragState = null;
+
+function startFreeDrag(e, cardId){
+  e.preventDefault();
+  e.stopPropagation(); // don't also trigger the header's collapse click
+  const card = document.getElementById(`matchup-card-${cardId}`);
+  const container = document.getElementById('matchup-view');
+  if (!card || !container) return;
+
+  const cardRect = card.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
+  // Freeze its current size before pulling it out of normal document
+  // flow, and pin it exactly where it already is so it doesn't jump.
+  const startLeft = cardRect.left - containerRect.left + container.scrollLeft;
+  const startTop = cardRect.top - containerRect.top + container.scrollTop;
+
+  card.style.position = 'absolute';
+  card.style.width = cardRect.width + 'px';
+  card.style.left = startLeft + 'px';
+  card.style.top = startTop + 'px';
+  card.style.zIndex = '50';
+  card.classList.add('free-floating');
+
+  if (getComputedStyle(container).position === 'static'){
+    container.style.position = 'relative';
+  }
+
+  freeDragState = {
+    card, container,
+    startMouseX: e.clientX, startMouseY: e.clientY,
+    startLeft, startTop,
+  };
+
+  document.addEventListener('mousemove', onFreeDragMove);
+  document.addEventListener('mouseup', onFreeDragEnd);
+}
+
+function onFreeDragMove(e){
+  if (!freeDragState) return;
+  const dx = e.clientX - freeDragState.startMouseX;
+  const dy = e.clientY - freeDragState.startMouseY;
+  const newLeft = freeDragState.startLeft + dx;
+  const newTop = Math.max(0, freeDragState.startTop + dy); // don't go above the container's top
+  freeDragState.card.style.left = newLeft + 'px';
+  freeDragState.card.style.top = newTop + 'px';
+
+  // Let the container grow taller as the card is dragged past its
+  // current bottom, so there's always somewhere further down to drop
+  // it — this is the actual fix for getting "stuck" at the bottom.
+  const cardBottom = newTop + freeDragState.card.offsetHeight;
+  const currentMin = parseFloat(freeDragState.container.style.minHeight) || 0;
+  if (cardBottom + 60 > currentMin){
+    freeDragState.container.style.minHeight = (cardBottom + 200) + 'px';
+  }
+}
+
+function onFreeDragEnd(){
+  if (!freeDragState) return;
+  freeDragState.card.style.zIndex = '5';
+  document.removeEventListener('mousemove', onFreeDragMove);
+  document.removeEventListener('mouseup', onFreeDragEnd);
+  freeDragState = null;
 }
 
 function toggleMatchupCard(cardId){
