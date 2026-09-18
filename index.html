@@ -442,6 +442,10 @@
     box-shadow:0 12px 32px rgba(0,0,0,0.3);
     margin-bottom:0;
   }
+  .matchup-card.will-snap{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
   .matchup-drag-handle{
     width:14px;height:14px;
     flex:none;
@@ -3059,6 +3063,33 @@ function matchupCardHtml(away, home){
 
 let freeDragState = null;
 
+/**
+ * The "list region" is the vertical span currently occupied by cards
+ * still in normal document flow (i.e., not already free-floating),
+ * plus a grace buffer so it's easy to drop something back in near the
+ * top/bottom edge without needing pixel-perfect aim.
+ */
+function isWithinListRegion(container, y){
+  const inFlowCards = [...container.querySelectorAll('.matchup-card:not(.free-floating)')];
+  if (inFlowCards.length === 0) return false;
+  const first = inFlowCards[0].getBoundingClientRect();
+  const last = inFlowCards[inFlowCards.length - 1].getBoundingClientRect();
+  const buffer = 50;
+  return y >= first.top - buffer && y <= last.bottom + buffer;
+}
+
+function matchupGetInsertionTarget(container, y){
+  const cards = [...container.querySelectorAll('.matchup-card:not(.free-floating)')];
+  return cards.reduce((closest, card) => {
+    const box = card.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset, element: card };
+    }
+    return closest;
+  }, { offset: -Infinity, element: null }).element;
+}
+
 function startFreeDrag(e, cardId){
   e.preventDefault();
   e.stopPropagation(); // don't also trigger the header's collapse click
@@ -3106,17 +3137,45 @@ function onFreeDragMove(e){
 
   // Let the container grow taller as the card is dragged past its
   // current bottom, so there's always somewhere further down to drop
-  // it — this is the actual fix for getting "stuck" at the bottom.
+  // it — the actual fix for getting "stuck" at the bottom.
   const cardBottom = newTop + freeDragState.card.offsetHeight;
   const currentMin = parseFloat(freeDragState.container.style.minHeight) || 0;
   if (cardBottom + 60 > currentMin){
     freeDragState.container.style.minHeight = (cardBottom + 200) + 'px';
   }
+
+  // Live preview: outline the card while it's hovering somewhere that
+  // would snap it back into the structured list on release.
+  const willSnap = isWithinListRegion(freeDragState.container, e.clientY);
+  freeDragState.card.classList.toggle('will-snap', willSnap);
 }
 
-function onFreeDragEnd(){
+function onFreeDragEnd(e){
   if (!freeDragState) return;
-  freeDragState.card.style.zIndex = '5';
+  const { card, container } = freeDragState;
+  const finalY = e ? e.clientY : null;
+  card.classList.remove('will-snap');
+
+  if (finalY != null && isWithinListRegion(container, finalY)){
+    // Snap back into the normal structured list — no more absolute
+    // positioning, so it can never overlap another card again, and
+    // ordinary up/down reordering works on it from here.
+    const target = matchupGetInsertionTarget(container, finalY);
+    card.style.position = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.width = '';
+    card.style.zIndex = '';
+    card.classList.remove('free-floating');
+    if (target == null){
+      container.appendChild(card);
+    } else if (target !== card){
+      container.insertBefore(card, target);
+    }
+  } else {
+    card.style.zIndex = '5';
+  }
+
   document.removeEventListener('mousemove', onFreeDragMove);
   document.removeEventListener('mouseup', onFreeDragEnd);
   freeDragState = null;
