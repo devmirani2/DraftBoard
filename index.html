@@ -447,6 +447,16 @@
     padding-bottom:14px;
     border-bottom:1px solid var(--line);
   }
+  .matchup-header.clickable{
+    cursor:pointer;
+  }
+  .matchup-chevron{
+    width:18px;height:18px;
+    flex:none;
+    margin-left:auto;
+    color:var(--ink-dim);
+    transition:transform 0.2s ease;
+  }
   .matchup-team-label{
     display:flex;
     align-items:center;
@@ -3006,28 +3016,41 @@ function matchupCardHtml(away, home){
   const weekNote = awayDC.weekLabel && homeDC.weekLabel
     ? `Depth chart reflects ${awayDC.weekLabel} usage`
     : '';
+  const cardId = `${away.id}-${home.id}`;
   return `
     <div class="matchup-card">
-      <div class="matchup-header">
+      <div class="matchup-header clickable" onclick="toggleMatchupCard('${cardId}')">
         <div class="matchup-team-label"><span class="wk-team-dot" style="background:${away.color}"></span>${away.name}</div>
         <div class="matchup-vs">@</div>
         <div class="matchup-team-label"><span class="wk-team-dot" style="background:${home.color}"></span>${home.name}</div>
+        <svg class="matchup-chevron" id="matchup-chevron-${cardId}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
-      ${weekNote ? `<p class="matchup-week-note">${weekNote}</p>` : ''}
-      <div class="matchup-depth-cols">
-        <div class="depth-col">
-          ${depthGroupHtml('QB', awayDC.qb)}
-          ${depthGroupHtml('RB', awayDC.rb)}
-          ${depthGroupHtml('WR / TE', awayDC.rec)}
-        </div>
-        <div class="depth-col">
-          ${depthGroupHtml('QB', homeDC.qb)}
-          ${depthGroupHtml('RB', homeDC.rb)}
-          ${depthGroupHtml('WR / TE', homeDC.rec)}
+      <div class="matchup-body" id="matchup-body-${cardId}">
+        ${weekNote ? `<p class="matchup-week-note">${weekNote}</p>` : ''}
+        <div class="matchup-depth-cols">
+          <div class="depth-col">
+            ${depthGroupHtml('QB', awayDC.qb)}
+            ${depthGroupHtml('RB', awayDC.rb)}
+            ${depthGroupHtml('WR / TE', awayDC.rec)}
+          </div>
+          <div class="depth-col">
+            ${depthGroupHtml('QB', homeDC.qb)}
+            ${depthGroupHtml('RB', homeDC.rb)}
+            ${depthGroupHtml('WR / TE', homeDC.rec)}
+          </div>
         </div>
       </div>
     </div>
   `;
+}
+
+function toggleMatchupCard(cardId){
+  const body = document.getElementById(`matchup-body-${cardId}`);
+  const chevron = document.getElementById(`matchup-chevron-${cardId}`);
+  if (!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  if (chevron) chevron.style.transform = collapsed ? '' : 'rotate(-90deg)';
 }
 
 function renderMatchupView(weekNum){
