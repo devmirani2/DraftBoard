@@ -487,6 +487,15 @@
     color:var(--ink-dim);
     font-weight:600;
   }
+  .matchup-kickoff{
+    text-align:center;
+    font-family:'Oswald',sans-serif;
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:var(--accent);
+    margin:-10px 0 16px;
+  }
   .matchup-week-note{
     text-align:center;
     font-size:11px;
@@ -3005,7 +3014,11 @@ function computeMatchupsForWeek(weekNum){
     if (seen.has(key)) return;
     seen.add(key);
     const isHome = /^vs\.?\s/i.test(g.opponent);
-    pairs.push({ home: isHome ? team : oppTeam, away: isHome ? oppTeam : team, when: g.week });
+    const homeTeam = isHome ? team : oppTeam;
+    const awayTeam = isHome ? oppTeam : team;
+    const homeScore = isHome ? g.score.split('-')[0] : g.score.split('-')[1];
+    const awayScore = isHome ? g.score.split('-')[1] : g.score.split('-')[0];
+    pairs.push({ home: homeTeam, away: awayTeam, when: `Final: ${awayTeam.abbr} ${awayScore} - ${homeTeam.abbr} ${homeScore}` });
   });
   return pairs;
 }
@@ -3026,7 +3039,7 @@ function depthGroupHtml(title, players){
   `;
 }
 
-function matchupCardHtml(away, home){
+function matchupCardHtml(away, home, when){
   const awayDC = teamDepthChart(away);
   const homeDC = teamDepthChart(home);
   const weekNote = awayDC.weekLabel && homeDC.weekLabel
@@ -3042,6 +3055,7 @@ function matchupCardHtml(away, home){
         <div class="matchup-team-label"><span class="wk-team-dot" style="background:${home.color}"></span>${home.name}</div>
         <svg class="matchup-chevron" id="matchup-chevron-${cardId}" style="transform:rotate(-90deg);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
+      ${when ? `<p class="matchup-kickoff">${when}</p>` : ''}
       <div class="matchup-body" id="matchup-body-${cardId}" style="display:none;">
         ${weekNote ? `<p class="matchup-week-note">${weekNote}</p>` : ''}
         <div class="matchup-depth-cols">
@@ -3198,7 +3212,7 @@ function renderMatchupView(weekNum){
     el.innerHTML = `<p class="empty-note">No Week ${weekNum} matchups available yet.</p>`;
     return;
   }
-  el.innerHTML = pairs.map(p => matchupCardHtml(p.away, p.home)).join('');
+  el.innerHTML = pairs.map(p => matchupCardHtml(p.away, p.home, p.when)).join('');
 }
 
 let splitViewActive = false;
