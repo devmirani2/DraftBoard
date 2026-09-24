@@ -127,7 +127,6 @@
     min-width:0;
   }
   .page-layout.split-active #matchup-view .matchup-depth-cols{
-    grid-template-columns:1fr;
     gap:10px;
   }
   .page-layout.split-active #matchup-view .matchup-header{
@@ -520,6 +519,11 @@
     flex:1;
     height:1px;
     background:var(--line);
+  }
+  #week2-schedule-list .slate-divider{
+    font-size:10px;
+    margin:14px 0 6px;
+    gap:8px;
   }
   .matchup-depth-cols{
     display:grid;
@@ -2851,21 +2855,31 @@ function computeWeek2Schedule(){
 function renderWeek2Schedule(){
   const el = document.getElementById('week2-schedule-list');
   if (!el) return;
-  const games = computeWeek2Schedule();
+  const games = [...computeWeek2Schedule()].sort((a, b) => sortKeyForWhen(a.when) - sortKeyForWhen(b.when));
   if (games.length === 0){
     el.innerHTML = `<p class="empty-note">No Week 2 matchups confirmed yet.</p>`;
     return;
   }
-  el.innerHTML = games.map(g => `
-    <div class="wk-game-row">
-      <div class="wk-matchup">
-        <span class="wk-team-dot" style="background:${g.away.color}"></span>${g.away.abbr}
-        <span class="wk-at">@</span>
-        <span class="wk-team-dot" style="background:${g.home.color}"></span>${g.home.abbr}
+  let html = '';
+  let lastSlate;
+  games.forEach(g => {
+    const slate = slateForWhen(g.when);
+    if (slate && slate !== lastSlate){
+      html += `<p class="slate-divider">${slate}</p>`;
+      lastSlate = slate;
+    }
+    html += `
+      <div class="wk-game-row">
+        <div class="wk-matchup">
+          <span class="wk-team-dot" style="background:${g.away.color}"></span>${g.away.abbr}
+          <span class="wk-at">@</span>
+          <span class="wk-team-dot" style="background:${g.home.color}"></span>${g.home.abbr}
+        </div>
+        <div class="wk-when">${g.when}</div>
       </div>
-      <div class="wk-when">${g.when}</div>
-    </div>
-  `).join('');
+    `;
+  });
+  el.innerHTML = html;
 }
 
 /* ---------------------------------------------------------
@@ -2994,22 +3008,23 @@ function renderHotWaivers(){
    actual usage rather than a hand-maintained roster order.
 --------------------------------------------------------- */
 function teamDepthChart(team){
-  const game = teamLatestGame(team);
-  if (!game) return { qb: [], rb: [], rec: [], weekLabel: null };
-  const passerNames = new Set((game.box.passing || []).map(p => p.name));
-  const qb = (game.box.passing || []).map(p => ({
+  const latest = teamLatestGame(team);
+  if (!latest) return { qb: [], rb: [], rec: [], weekLabel: null };
+  const seasonBox = computeSeasonBox(team, 2026);
+  const passerNames = new Set((seasonBox.passing || []).map(p => p.name));
+  const qb = (seasonBox.passing || []).map(p => ({
     name: p.name, num: p.num, stat: `${p.cAtt}, ${p.yds} yd`,
   }));
-  const rb = (game.box.rushing || [])
+  const rb = (seasonBox.rushing || [])
     .filter(p => !passerNames.has(p.name))
     .slice()
     .sort((a, b) => b.car - a.car)
     .map(p => ({ name: p.name, num: p.num, stat: `${p.car} car, ${p.yds} yd` }));
-  const rec = (game.box.receiving || [])
+  const rec = (seasonBox.receiving || [])
     .slice()
     .sort((a, b) => (b.tgts || 0) - (a.tgts || 0))
     .map(p => ({ name: p.name, num: p.num, stat: `${p.rec} rec, ${p.yds} yd` }));
-  return { qb, rb, rec, weekLabel: game.week };
+  return { qb, rb, rec, weekLabel: `through ${latest.week}` };
 }
 
 function computeMatchupsForWeek(weekNum){
@@ -3060,7 +3075,7 @@ function matchupCardHtml(away, home, when){
   const awayDC = teamDepthChart(away);
   const homeDC = teamDepthChart(home);
   const weekNote = awayDC.weekLabel && homeDC.weekLabel
-    ? `Depth chart reflects ${awayDC.weekLabel} usage`
+    ? `Depth chart reflects season totals (${awayDC.weekLabel})`
     : '';
   const cardId = `${away.id}-${home.id}`;
   return `
