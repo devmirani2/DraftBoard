@@ -1034,6 +1034,14 @@
   }
   .g-result.W{background:#e5f5ea;color:#1f7a3d;}
   .g-result.L{background:#fbe9e9;color:#b3261e;}
+  .inj-badge{display:inline-block;margin-left:4px;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.3px;line-height:1.4;vertical-align:middle;cursor:help;}
+  .inj-out{background:#fbe9e9;color:#b3261e;}
+  .inj-doubt{background:#fdeadb;color:#b3560e;}
+  .inj-q{background:#fff4cc;color:#8a6d00;}
+  .inj-ir,.inj-szn,.inj-pup{background:#b3261e;color:#fff;}
+  .inj-inj{background:#ececec;color:#555;}
+  .inj-legend{font-size:11.5px;color:var(--ink-dim);margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .inj-legend .inj-badge{margin-left:0;cursor:default;}
   .g-result.T{background:#ececec;color:#555;}
 
   .season-tabs{
@@ -1504,6 +1512,7 @@
     <button class="view-switch-btn" id="split-view-btn" onclick="toggleSplitView()" style="display:none; margin-left:10px;">Split View</button>
     <button class="view-switch-btn" id="view-toggle-nhl" onclick="switchMiddleView('nhl')" style="margin-left:10px;">NHL</button>
   </div>
+  <div class="inj-legend" id="inj-legend"><span>Injuries:</span><span class="inj-badge inj-out">OUT</span><span class="inj-badge inj-doubt">DOUBT</span><span class="inj-badge inj-q">Q</span><span class="inj-badge inj-ir">IR</span><span class="inj-badge inj-szn">SZN</span><span class="inj-badge inj-inj">INJ</span><span id="inj-legend-label"></span></div>
 </div>
 <div class="page-layout" id="page-layout-el">
   <div id="cards" class="cards-wrap"></div>
@@ -2024,14 +2033,72 @@ function selectGame(ti, gi){
 function row(cells){
   return `<tr>${cells}</tr>`;
 }
+
+/* ---------------------------------------------------------
+   INJURY REPORT  (Week 7, as of Sat Oct 24, 2026)
+   Sources: NFL.com Week 7 report + Yahoo injury tracker.
+   Format: [team, name, pos, injury, status]
+   status: OUT | DOUBT | Q | IR | PUP | SZN (out for season) | INJ (hurt, no designation)
+   Update this block each week; badges appear everywhere a player name shows.
+--------------------------------------------------------- */
+const INJURY_REPORT_LABEL = "Week 7 injury report \u00b7 Oct 24";
+const INJURIES = [
+ ["PIT","Ben Skowronek","WR","Calf","OUT"],["PIT","Brandin Echols","CB","Hamstring","OUT"],["PIT","Rico Dowdle","RB","Knee","Q"],["PIT","DeShon Elliott","S","Knee","Q"],
+ ["PIT","Michael Pittman Jr.","WR","Foot","IR"],["PIT","Roman Wilson","WR","Finger","IR"],
+ ["NO","Cesar Ruiz","G","Knee","Q"],["NO","Nathan Shepherd","DT","Illness","Q"],["NO","Jordyn Tyson","WR","Hamstring","IR"],["NO","Travis Etienne Jr.","RB","Hamstring","IR"],
+ ["SF","Mike Evans","WR","Ribs/Achilles","OUT"],["SF","Deebo Samuel","WR","Hamstring","OUT"],["SF","Nick Bosa","DE","Knee/calf","OUT"],["SF","Luke Gifford","LB","Groin","OUT"],["SF","Garret Wallow","LB","Hamstring","OUT"],["SF","Marques Sigle","S","Ankle","OUT"],
+ ["SF","Christian Kirksey","WR","","Q"],["SF","Upton Stout","CB","Shoulder","Q"],["SF","Siran Neal","S","Knee","Q"],["SF","Ricky Pearsall","WR","Knee","SZN"],["SF","De'Zhaun Stribling","WR","Ankle","IR"],
+ ["ATL","Brian Robinson Jr.","RB","Hamstring","OUT"],["ATL","Michael Jerrell","OT","Bicep","OUT"],["ATL","Divine Deablo","LB","Forearm","OUT"],["ATL","Billy Bowman Jr.","DB","Hamstring","OUT"],
+ ["ATL","Beaux Collins","WR","Hip","Q"],["ATL","Olamide Zaccheaus","WR","Shoulder","Q"],["ATL","Cameron Williams","OT","Ankle","Q"],["ATL","Samson Ebukam","DE","Hamstring","Q"],["ATL","Za'Darius Smith","DE","Neck","Q"],["ATL","Gervon Dexter","DT","Hamstring","Q"],["ATL","Kendal Daniels","LB","Neck","Q"],["ATL","C.J. Henderson","CB","Groin","Q"],["ATL","A.J. Terrell","CB","Groin","Q"],["ATL","Avieon Terrell","CB","Back","Q"],
+ ["BAL","Tavius Robinson","OLB","Pectoral","OUT"],["BAL","Jaylinn Hawkins","S","Knee","OUT"],["BAL","T.J. Tampa","CB","Knee","DOUBT"],["BAL","Lamar Jackson","QB","Ankle","Q"],["BAL","Broderick Washington","DT","Ankle","Q"],
+ ["TB","Emeka Egbuka","WR","Concussion/foot","OUT"],["TB","Luke Goedeke","OT","Calf","OUT"],["TB","Antoine Winfield Jr.","S","Rib","OUT"],["TB","Baker Mayfield","QB","Right thumb","Q"],["TB","Jalen McMillan","WR","Knee","IR"],
+ ["CAR","Thomas Incoom","OLB","Calf","OUT"],["CAR","Jaelan Phillips","OLB","Hamstring","OUT"],["CAR","Monroe Freeling","OT","Knee","Q"],["CAR","Bam Martin-Scott","LB","Hamstring","Q"],["CAR","Jonathon Brooks","RB","Core muscle","IR"],
+ ["NYG","Tremaine Edmunds","LB","Shoulder","OUT"],["NYG","Greg Newsome II","CB","Concussion","OUT"],["NYG","Theo Johnson","TE","Neck","DOUBT"],["NYG","Jermaine Eluemunor","OT","Calf","Q"],["NYG","Marcus Mbow","OL","Knee","Q"],["NYG","Paulson Adebo","CB","Knee","Q"],["NYG","Jevon Holland","S","Concussion","Q"],["NYG","Tyler Nubin","S","Neck","Q"],["NYG","Jaxson Dart","QB","Knee","SZN"],
+ ["HOU","David Montgomery","RB","Groin","OUT"],["HOU","Blake Fisher","OT","Thumb","OUT"],["HOU","Reed Blankenship","S","Concussion/hand","OUT"],["HOU","Jalen Pitre","S","Shoulder","OUT"],["HOU","Tank Dell","WR","Knee","Q"],["HOU","Jayden Higgins","WR","Knee","SZN"],
+ ["IND","Anthony Gould","WR","Concussion","OUT"],["IND","Tyler Warren","TE","Groin","OUT"],["IND","Sauce Gardner","CB","Calf","OUT"],["IND","CJ Allen","LB","Ankle","Q"],["IND","Bryce Boettcher","LB","Groin","Q"],["IND","Justin Walley","CB","Knee","Q"],["IND","Rigoberto Sanchez","P","Right foot","Q"],["IND","Alec Pierce","WR","Heel","IR"],
+ ["MIN","Jordan Mason","RB","Thumb","Q"],
+ ["MIA","Reese Taylor","CB","Quad","OUT"],["MIA","Robert Beal Jr.","EDGE","Hamstring","DOUBT"],["MIA","Willie Gay Jr.","LB","Illness","Q"],["MIA","Kyle Louis","S","Knee","Q"],["MIA","De'Von Achane","RB","Knee","SZN"],
+ ["NYJ","Max Mitchell","OL","Concussion","OUT"],["NYJ","Joseph Ossai","EDGE","Ankle","OUT"],["NYJ","Francisco Mauigoa","LB","Quad","OUT"],["NYJ","Breece Hall","RB","Quad","Q"],["NYJ","Kene Nwangwu","RB","Knee","Q"],["NYJ","Dylan Parham","OL","Knee","Q"],
+ ["CLE","Dillon Gabriel","QB","Back","OUT"],["CLE","Teven Jenkins","G","Back","OUT"],["CLE","Khalil Davis","DT","Quad","OUT"],["CLE","Mike Hall","DT","Ankle","OUT"],["CLE","Dylan Sampson","RB","Knee","Q"],["CLE","Quincy Williams","LB","Neck","Q"],["CLE","Denzel Ward","CB","Hand","Q"],["CLE","Grant Delpit","S","Concussion/shoulder","Q"],
+ ["TEN","Tyjae Spears","RB","Knee","Q"],["TEN","Calvin Ridley","WR","Hip","Q"],["TEN","Dorian Mausi","LB","Foot","Q"],["TEN","Tony Adams","S","Ankle","Q"],["TEN","Kevin Winston Jr.","S","Quad","Q"],
+ ["DEN","Tyler Badie","RB","Thumb","OUT"],["DEN","Jonah Elliss","OLB","Ankle","OUT"],["DEN","Talanoa Hufanga","S","Ankle","OUT"],["DEN","Jonah Coleman","RB","Ankle","Q"],["DEN","Patrick Surtain II","CB","Ankle","Q"],["DEN","Pat Bryant","WR","Ankle","IR"],
+ ["ARI","Jeremiyah Love","RB","Ankle","OUT"],["ARI","Jon Gaines II","OL","Knee/ankle","OUT"],["ARI","Walter Nolen","DL","Ankle","OUT"],["ARI","Andrew Wingard","S","Knee","OUT"],["ARI","Carson Beck","QB","Back","Q"],["ARI","Darius Robinson","DL","Back","Q"],["ARI","Max Melton","CB","Knee","Q"],["ARI","Budda Baker","S","Groin/illness","Q"],
+ ["GB","Zaire Franklin","LB","Shin","OUT"],["GB","Bo Melton","WR","Back","Q"],["GB","Aaron Banks","G","Knee/toe","Q"],["GB","Jordon Riley","DT","Achilles","Q"],["GB","Benjamin St-Juste","CB","Hamstring","Q"],
+ ["DET","Cade Mays","C","Wrist","Q"],["DET","Brian Branch","S","Achilles","Q"],
+ ["LAR","Nate Landman","LB","Concussion","OUT"],["LAR","Puka Nacua","WR","Calf","Q"],["LAR","Trent McDuffie","CB","Groin","Q"],["LAR","Davante Adams","WR","Ruptured hamstring (6-10 wks)","SZN"],["LAR","Terrance Ferguson","TE","Ankle","IR"],
+ ["LV","Dont'e Thornton Jr.","WR","Hamstring","OUT"],["LV","Carter Runyon","TE","Foot","OUT"],["LV","Mike Washington Jr.","RB","Foot/back","Q"],
+ ["KC","Brashard Smith","RB","Hamstring","OUT"],["KC","Rashee Rice","WR","Hamstring/knee","OUT"],["KC","Jaylon Moore","OL","Concussion","OUT"],["KC","Cooper McDonald","LB","Knee","Q"],["KC","L'Jarius Sneed","CB","Knee","Q"],
+ ["SEA","Zach Charbonnet","RB","Knee (PUP)","OUT"],["SEA","Chazz Surratt","LB","Calf","OUT"],["SEA","Drake Thomas","LB","Ankle","OUT"],["SEA","Drew Lock","QB","Right elbow","Q"],["SEA","Demarcus Lawrence","LB","Knee","Q"],["SEA","Uchenna Nwosu","LB","Hip","Q"],["SEA","Connor O'Toole","LB","Hamstring","Q"],["SEA","Nick Emmanwori","S","Hip","Q"],["SEA","Jadarian Price","RB","Chest","IR"],
+ ["PHI","Jalen Hurts","QB","Blood clots (reported)","SZN"],["PHI","Will Shipley","RB","Foot","IR"],["PHI","Tank Bigsby","RB","Abdomen","IR"],
+ ["LAC","Ladd McConkey","WR","Concussion","INJ"],["LAC","David Njoku","TE","Knee","IR"],
+ ["WAS","Stefon Diggs","WR","Hamstring","INJ"],["WAS","Jacory Croskey-Merritt","RB","Groin","IR"],
+ ["BUF","DJ Moore","WR","Shoulder","INJ"]
+];
+const INJ_LABEL = {OUT:"OUT", DOUBT:"DOUBT", Q:"Q", IR:"IR", PUP:"PUP", SZN:"SZN", INJ:"INJ"};
+const INJ_FULL = {OUT:"Out", DOUBT:"Doubtful", Q:"Questionable", IR:"Injured reserve", PUP:"PUP list", SZN:"Out for season", INJ:"Injured"};
+const INJ_MAP = (function(){
+  const m = new Map();
+  const norm = n => String(n||'').toLowerCase().replace(/[.'\u2019]/g,'').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
+  INJURIES.forEach(r => m.set(norm(r[1]), {team:r[0], name:r[1], pos:r[2], inj:r[3], status:r[4]}));
+  m.norm = norm;
+  return m;
+})();
+function injuryFor(name){ return INJ_MAP.get(INJ_MAP.norm(name)) || null; }
+function injBadge(name){
+  const i = injuryFor(name);
+  if (!i) return '';
+  const tip = `${INJ_FULL[i.status]}${i.inj ? ' \u2014 ' + i.inj : ''} (${INJURY_REPORT_LABEL})`;
+  return ` <span class="inj-badge inj-${i.status.toLowerCase()}" title="${tip.replace(/"/g,'&quot;')}">${INJ_LABEL[i.status]}</span>`;
+}
+
 function nameCell(name, num, ctx){
   if (ctx && ctx.interactive){
     const jsEscape = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     const key = jsEscape(name + '#' + num);
     const safeName = jsEscape(name);
-    return `<td class="player-name clickable" onclick="selectPlayer(this, ${ctx.ti}, '${ctx.catKey}', '${key}', '${safeName}')">${name} <span class="num">#${num}</span></td>`;
+    return `<td class="player-name clickable" onclick="selectPlayer(this, ${ctx.ti}, '${ctx.catKey}', '${key}', '${safeName}')">${name} <span class="num">#${num}</span>${injBadge(name)}</td>`;
   }
-  return `<td class="player-name">${name} <span class="num">#${num}</span></td>`;
+  return `<td class="player-name">${name} <span class="num">#${num}</span>${injBadge(name)}</td>`;
 }
 
 function renderBox(ti, gi, side){
@@ -2855,7 +2922,7 @@ function tdRevealHtml(ti){
         <div class="td-row">
           <span class="td-team-dot" style="background:${s.team.color}"></span>
           <div class="td-info">
-            <span class="td-name">${s.name} <span class="td-num">#${s.num}</span></span>
+            <span class="td-name">${s.name} <span class="td-num">#${s.num}</span>${injBadge(s.name)}</span>
             <span class="td-meta">${s.team.abbr} &middot; ${s.type === 'rush' ? 'Rushing' : 'Receiving'} TD${s.count > 1 ? ` x${s.count}` : ''}</span>
           </div>
         </div>
@@ -2911,7 +2978,7 @@ function tdRevealHtml(ti){
             <div class="td-row">
               <span class="td-team-dot" style="background:${nextOppTeam.color}"></span>
               <div class="td-info">
-                <span class="td-name">${p.name} <span class="td-num">#${p.num}</span></span>
+                <span class="td-name">${p.name} <span class="td-num">#${p.num}</span>${injBadge(p.name)}</span>
                 <span class="td-meta">${nextOppTeam.abbr} &middot; ${p.role}${p.td > 0 ? ` &middot; ${p.td} TD${p.td > 1 ? 's' : ''} in ${oppGame.week}` : ''}</span>
               </div>
             </div>
@@ -3074,7 +3141,7 @@ function computeWeek2Opportunities(){
 }
 
 function scorerLineHtml(s){
-  return `<div class="wk-opp-scorer"><b>${s.name}</b> <span class="wk-opp-type">#${s.num} &middot; ${s.type === 'rush' ? 'Rush' : 'Rec'} TD${s.count > 1 ? ` x${s.count}` : ''}</span></div>`;
+  return `<div class="wk-opp-scorer"><b>${s.name}</b>${injBadge(s.name)} <span class="wk-opp-type">#${s.num} &middot; ${s.type === 'rush' ? 'Rush' : 'Rec'} TD${s.count > 1 ? ` x${s.count}` : ''}</span></div>`;
 }
 
 function renderWeek2Opportunities(){
@@ -3137,7 +3204,7 @@ function renderHotWaivers(){
       <div class="waiver-row">
         <div class="waiver-name-row">
           <span class="wk-team-dot" style="background:${teamColor}"></span>
-          <span class="waiver-name">${w.name} <span class="wk-opp-type">#${w.num} &middot; ${teamAbbr}</span></span>
+          <span class="waiver-name">${w.name}${injBadge(w.name)} <span class="wk-opp-type">#${w.num} &middot; ${teamAbbr}</span></span>
           <span class="waiver-pos-pill">${w.pos}</span>
         </div>
         <p class="waiver-blurb">${w.blurb}</p>
@@ -3214,7 +3281,7 @@ function depthGroupHtml(title, players){
       <p class="depth-group-title">${title}</p>
       ${players.map(p => `
         <div class="depth-player" onclick="this.classList.toggle('selected')">
-          <span class="depth-player-name">${p.name}</span>
+          <span class="depth-player-name">${p.name}${injBadge(p.name)}</span>
           <span class="depth-player-num">#${p.num}</span>
           <span class="depth-player-stat">${p.stat}</span>
         </div>
@@ -3953,6 +4020,7 @@ function renderWonBets(){
 renderHotWaivers();
 renderWonBets();
 renderWeek2Schedule();
+(function(){ const l=document.getElementById('inj-legend-label'); if(l) l.textContent = '\u00b7 ' + INJURY_REPORT_LABEL + ' \u00b7 hover a badge for details'; })();
 </script>
 </body>
 </html>
