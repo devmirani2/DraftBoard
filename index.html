@@ -1550,6 +1550,8 @@
   .nbaw-target small{color:var(--ink-dim);}
   html[data-theme="dark"] .nbaw-tag.soft{color:#6fd69a;}
   html[data-theme="dark"] .nbaw-tag.tough{color:#ff8f86;}
+  .box-tabs{display:flex;gap:6px;margin:6px 0 8px;}
+  .box-tabs .nba-stat-btn{min-width:52px;height:28px;font-size:12px;}
   /* ---------- DARK THEME ---------- */
   html[data-theme="dark"]{
     color-scheme:dark;
@@ -3819,10 +3821,16 @@ function nhlBoxHtml(g){
   return `<table class="nba-table"><thead><tr><th>Skater</th><th>POS</th><th>G</th><th>A</th><th>PTS</th><th>+/-</th><th>SOG</th><th>HIT</th><th>TOI</th></tr></thead><tbody>${rows}</tbody></table>` +
     (gl ? `<table class="nba-table" style="margin-top:8px;"><thead><tr><th>Goalie</th><th>SA</th><th>SV</th><th>GA</th><th>SV%</th><th>TOI</th></tr></thead><tbody>${gl}</tbody></table>` : "");
 }
+function nhlGameBox(t,g){
+  const oppName = g.opponent.replace(/^(vs\. |at )/,"");
+  const ot = NHL_TEAMS.find(x => x.name === oppName);
+  const og = ot && ot.games.find(x => x.date === g.date && x.opponent.endsWith(t.name));
+  return boxWithOpp(t.abbr, nhlBoxHtml(g), ot ? ot.abbr : "", og && og.players && og.players.length ? nhlBoxHtml(og) : "");
+}
 function nhlTeamHtml(t){
   const r = nhlRecObj(t);
   const games = t.games.length
-    ? t.games.map(g=>`<div class="nba-game" onclick="this.classList.toggle('open');event.stopPropagation()"><div class="nba-game-line"><span>${g.date} &middot; ${g.opponent}</span><span class="${g.result==='W'?'nba-res-w':'nba-res-l'}">${g.result} ${g.score}</span></div><div class="nba-box">${nhlBoxHtml(g)}</div></div>`).join("")
+    ? t.games.map(g=>`<div class="nba-game" onclick="this.classList.toggle('open');event.stopPropagation()"><div class="nba-game-line"><span>${g.date} &middot; ${g.opponent}</span><span class="${g.result==='W'?'nba-res-w':'nba-res-l'}">${g.result} ${g.score}</span></div><div class="nba-box">${nhlGameBox(t,g)}</div></div>`).join("")
     : '<p class="nba-empty">No games logged yet.</p>';
   return `<div class="nba-team" style="--tc:${t.color}"><div class="nba-team-head" onclick="this.parentNode.classList.toggle('open')"><span class="nba-abbr">${t.abbr}</span><div><div class="nba-team-name">${t.name}</div><div class="nba-team-rec">${r.w}-${r.l}-${r.o} &middot; ${r.pts} pts</div></div></div><div class="nba-team-body">${games}</div></div>`;
 }
@@ -3882,6 +3890,16 @@ function nhlPrevLabel(dayLabel){
 }
 function nhlB2BTag(abbr, dayLabel){
   return nhlPlayedOn(abbr, nhlPrevLabel(dayLabel)) ? '<span class="nbaw-tag tough" title="Played yesterday" style="margin-left:6px;">B2B</span>' : '';
+}
+function boxTab(e, btn, i){
+  e.stopPropagation();
+  const root = btn.closest('.nba-box');
+  root.querySelectorAll('.box-tab').forEach((b,j) => b.classList.toggle('active', j === i));
+  root.querySelectorAll('.box-pane').forEach((p,j) => p.style.display = j === i ? '' : 'none');
+}
+function boxWithOpp(ownAbbr, ownHtml, oppAbbr, oppHtml){
+  if (!oppHtml) return ownHtml;
+  return `<div class="box-tabs"><button class="nba-stat-btn box-tab active" onclick="boxTab(event,this,0)">${ownAbbr}</button><button class="nba-stat-btn box-tab" onclick="boxTab(event,this,1)">${oppAbbr}</button></div><div class="box-pane">${ownHtml}</div><div class="box-pane" style="display:none;">${oppHtml}</div>`;
 }
 const NHLW_STATS = [["sog","SOG"],["pts","PTS"],["g","G"],["a","A"],["hit","HIT"]];
 const NHLW_POS = [["C","centers"],["LW","left wings"],["RW","right wings"],["D","defensemen"]];
@@ -4394,9 +4412,15 @@ function nbaBoxHtml(g){
   const rows = g.players.map(p => `<tr><td>${p.name}</td><td>${p.min ?? ""}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.ftm}/${p.fta}</td><td>${p.stl}</td><td>${p.blk}</td></tr>`).join("");
   return `<table class="nba-table"><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FT</th><th>STL</th><th>BLK</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
+function nbaGameBox(t,g){
+  const oppName = g.opponent.replace(/^(vs\. |at )/,"");
+  const ot = NBA_TEAMS.find(x => x.name === oppName);
+  const og = ot && ot.games.find(x => x.date === g.date && x.opponent.endsWith(t.name));
+  return boxWithOpp(t.abbr, nbaBoxHtml(g), ot ? ot.abbr : "", og && og.players && og.players.length ? nbaBoxHtml(og) : "");
+}
 function nbaTeamHtml(t){
   const games = t.games.length
-    ? t.games.map((g,i)=>`<div class="nba-game" onclick="this.classList.toggle('open');event.stopPropagation()"><div class="nba-game-line"><span>${g.date} &middot; ${g.opponent}</span><span class="${g.result==='W'?'nba-res-w':'nba-res-l'}">${g.result} ${g.score}</span></div><div class="nba-box">${nbaBoxHtml(g)}</div></div>`).join("")
+    ? t.games.map((g,i)=>`<div class="nba-game" onclick="this.classList.toggle('open');event.stopPropagation()"><div class="nba-game-line"><span>${g.date} &middot; ${g.opponent}</span><span class="${g.result==='W'?'nba-res-w':'nba-res-l'}">${g.result} ${g.score}</span></div><div class="nba-box">${nbaGameBox(t,g)}</div></div>`).join("")
     : '<p class="nba-empty">No games logged yet.</p>';
   return `<div class="nba-team" style="--tc:${t.color}"><div class="nba-team-head" onclick="this.parentNode.classList.toggle('open')"><span class="nba-abbr">${t.abbr}</span><div><div class="nba-team-name">${t.name}</div><div class="nba-team-rec">${nbaRecord(t)}</div></div></div><div class="nba-team-body">${games}</div></div>`;
 }
