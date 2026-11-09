@@ -626,6 +626,23 @@
     grid-template-columns:1fr 1fr;
     gap:20px;
   }
+
+  .props-cols{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .props-block{ min-width:0; margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
+  .props-title{ font-family:'Oswald',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-dim); margin:0 0 4px; }
+  .props-sub{ font-size:10.5px; color:var(--ink-dim); margin:0 0 6px; }
+  .props-tbl{ width:100%; table-layout:fixed; border-collapse:collapse; font-size:11.5px; }
+  .props-tbl th{ text-align:left; font-weight:600; color:var(--ink-dim); font-size:10px; text-transform:uppercase; letter-spacing:0.04em; padding:2px 4px; }
+  .props-tbl td{ padding:4px; border-top:1px solid var(--line); vertical-align:top; }
+  .props-tbl td.pn{ font-weight:600; width:26%; word-break:break-word; }
+  .props-tbl td{ word-break:break-word; }
+  .props-line{ font-weight:700; }
+  .props-mv{ font-size:10px; color:var(--ink-dim); }
+  .props-mv.up{ color:#1f6b3f; } .props-mv.dn{ color:#b3362c; }
+  .props-rate{ display:block; font-size:10.5px; color:var(--ink-dim); }
+  .props-rate.lo{ color:#b3362c; } .props-rate.hi{ color:#1f6b3f; }
+  html[data-theme="dark"] .props-mv.up, html[data-theme="dark"] .props-rate.hi{ color:#6fd69a; }
+  html[data-theme="dark"] .props-mv.dn, html[data-theme="dark"] .props-rate.lo{ color:#ff8f86; }
   .depth-group{ margin-bottom:14px; }
   .depth-group:last-child{ margin-bottom:0; }
   .depth-group-title{
@@ -1042,6 +1059,7 @@
   .inj-q{background:#fff4cc;color:#8a6d00;}
   .inj-ir,.inj-szn,.inj-pup{background:#b3261e;color:#fff;}
   .inj-inj{background:#ececec;color:#555;}
+  .inj-inact{background:#f0f0f0;color:#777;font-weight:600;}
   .role-badge{display:inline-block;margin-left:4px;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.3px;line-height:1.4;vertical-align:middle;cursor:help;}
   .role-wo{background:#e3edfc;color:#1f4fa8;}
   .role-slot{background:#efe6fa;color:#6a2fb0;}
@@ -1583,6 +1601,7 @@
   html[data-theme="dark"] .impact-pill.impact-negative{background:rgba(220,70,60,0.20);color:#ff8f86;}
   html[data-theme="dark"] .inj-doubt{background:rgba(230,130,50,0.20);color:#ffb070;}
   html[data-theme="dark"] .inj-q{background:rgba(230,190,40,0.20);color:#f2d368;}
+  html[data-theme="dark"] .inj-inact{background:rgba(255,255,255,0.08);color:#a0a0a0;}
   html[data-theme="dark"] .inj-inj,
   html[data-theme="dark"] .g-result.T{background:rgba(255,255,255,0.10);color:#b8c2bb;}
   html[data-theme="dark"] .role-wo{background:rgba(70,120,220,0.22);color:#93b5f5;}
@@ -1600,6 +1619,15 @@
   html[data-theme="dark"] .card-chevron,
   html[data-theme="dark"] .nba-abbr{filter:none;}
   .theme-toggle{margin-left:auto;}
+  .nflw-lists{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 14px;}
+  @media (max-width:700px){.nflw-lists{grid-template-columns:1fr;}}
+  .nflw-col h4{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 4px;}
+  .nflw-li{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line);}
+  .nflw-li:last-child{border-bottom:none;}
+  .nflw-pos-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--ink);margin:12px 0 2px;}
+  .nflw-note{font-size:11px;color:var(--ink-dim);}
+  .nflw-sel{font-family:'Oswald',sans-serif;font-weight:700;font-size:12.5px;height:32px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass);color:var(--ink);padding:0 8px;}
+
 </style>
 <script>try{if(localStorage.getItem("theme")==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}</script>
 </head>
@@ -1618,6 +1646,7 @@
   <div class="view-switcher">
     <button class="view-switch-btn active" id="view-toggle-cards" onclick="switchMiddleView('cards')">Season Tracker</button>
     <button class="view-switch-btn" id="view-toggle-matchups" onclick="switchMiddleView('matchups')">Matchup View</button>
+    <button class="view-switch-btn" id="view-toggle-nflw" onclick="switchMiddleView('nflw')">Weak Spots</button>
     <select class="matchup-week-select" id="matchup-week-select" onchange="onMatchupWeekChange()" style="display:none;">
       <option value="1">Week 1</option>
       <option value="2">Week 2</option>
@@ -1636,7 +1665,7 @@
     <button class="view-switch-btn" id="view-toggle-bets" onclick="switchMiddleView('bets')" style="margin-left:10px;">My Winning Bets</button>
     <button class="view-switch-btn theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Switch light/dark">&#9790; Dark</button>
   </div>
-  <div class="inj-legend" id="inj-legend"><span>Injuries:</span><span class="inj-badge inj-out">OUT</span><span class="inj-badge inj-doubt">DOUBT</span><span class="inj-badge inj-q">Q</span><span class="inj-badge inj-ir">IR</span><span class="inj-badge inj-szn">SZN</span><span class="inj-badge inj-inj">INJ</span><span id="inj-legend-label"></span><span style="margin-left:10px;">WRs:</span><span class="role-badge role-wo" style="margin-left:0;cursor:default;">WO</span><span>wideout</span><span class="role-badge role-slot" style="cursor:default;">SLOT</span><span>slot &middot; <span id="role-legend-label"></span></span></div>
+  <div class="inj-legend" id="inj-legend"><span>Injuries:</span><span class="inj-badge inj-out">OUT</span><span class="inj-badge inj-doubt">DOUBT</span><span class="inj-badge inj-q">Q</span><span class="inj-badge inj-ir">IR</span><span class="inj-badge inj-szn">SZN</span><span class="inj-badge inj-inj">INJ</span><span class="inj-badge inj-inact">INACT</span><span id="inj-legend-label"></span><span style="margin-left:10px;">WRs:</span><span class="role-badge role-wo" style="margin-left:0;cursor:default;">WO</span><span>wideout</span><span class="role-badge role-slot" style="cursor:default;">SLOT</span><span>slot &middot; <span id="role-legend-label"></span></span></div>
 </div>
 <div class="page-layout" id="page-layout-el">
   <div id="cards" class="cards-wrap"></div>
@@ -1713,6 +1742,23 @@
       <div class="nba-stat-tabs" id="nba-weak-days"></div>
       <div id="nba-weak-games"></div>
     </div>
+  </div>
+</div>
+</div>
+
+<div id="nflw-view-wrap" style="display:none;">
+<div class="nba-section">
+  <div class="nba-head"><div>
+    <p class="nba-title">NFL &mdash; Weak Spots by Position</p>
+    <p class="nba-sub">How many yards, catches or TDs each defense gives up per game to QBs, RBs, WRs and TEs, against the league average, and the best player on the other side to target. <b>WEAK</b> = 8%+ more than average, <b>TOUGH</b> = 8%+ less. Projection = player's season average &times; (defense allowed &divide; league average). Players who are OUT/IR in the injury report are skipped. Based on Weeks 1&ndash;8 box scores (one game is ~7 per defense, so treat it as a tilt, not a lock).</p>
+  </div></div>
+  <div class="nba-panel">
+    <div class="nba-stat-tabs" id="nflw-stat"></div>
+    <div id="nflw-rank"></div>
+  </div>
+  <div class="nba-panel">
+    <div class="nba-stat-tabs"><label class="nflw-note" style="align-self:center;">Week</label><select class="nflw-sel" id="nflw-week" onchange="nflwWeek=+this.value;renderNflWeak()"></select></div>
+    <div id="nflw-games"></div>
   </div>
 </div>
 </div>
@@ -2094,47 +2140,311 @@ function row(cells){
 }
 
 /* ---------------------------------------------------------
-   INJURY REPORT  (Week 7, as of Sat Oct 24, 2026)
-   Sources: NFL.com Week 7 report + Yahoo injury tracker.
+   INJURY REPORT  (Week 9, as of Mon Nov 9, 2026 morning)
+   Source: Apify sports-injury-reports export (ESPN status + Rotowire-style notes). INACT = Week 9 inactive, reason not injury-specific.
    Format: [team, name, pos, injury, status]
-   status: OUT | DOUBT | Q | IR | PUP | SZN (out for season) | INJ (hurt, no designation)
+   status: OUT | DOUBT | Q | IR | PUP | SZN (out for season) | INJ (hurt, no designation) | INACT (inactive, no injury given)
    Update this block each week; badges appear everywhere a player name shows.
 --------------------------------------------------------- */
-const INJURY_REPORT_LABEL = "Week 7 injury report \u00b7 Oct 24";
+const INJURY_REPORT_LABEL = "Week 9 injury report \u00b7 Nov 9";
 const INJURIES = [
- ["PIT","Ben Skowronek","WR","Calf","OUT"],["PIT","Brandin Echols","CB","Hamstring","OUT"],["PIT","Rico Dowdle","RB","Knee","Q"],["PIT","DeShon Elliott","S","Knee","Q"],
- ["PIT","Michael Pittman Jr.","WR","Foot","IR"],["PIT","Roman Wilson","WR","Finger","IR"],
- ["NO","Cesar Ruiz","G","Knee","Q"],["NO","Nathan Shepherd","DT","Illness","Q"],["NO","Jordyn Tyson","WR","Hamstring","IR"],["NO","Travis Etienne Jr.","RB","Hamstring","IR"],
- ["SF","Mike Evans","WR","Ribs/Achilles","OUT"],["SF","Deebo Samuel","WR","Hamstring","OUT"],["SF","Nick Bosa","DE","Knee/calf","OUT"],["SF","Luke Gifford","LB","Groin","OUT"],["SF","Garret Wallow","LB","Hamstring","OUT"],["SF","Marques Sigle","S","Ankle","OUT"],
- ["SF","Christian Kirksey","WR","","Q"],["SF","Upton Stout","CB","Shoulder","Q"],["SF","Siran Neal","S","Knee","Q"],["SF","Ricky Pearsall","WR","Knee","SZN"],["SF","De'Zhaun Stribling","WR","Ankle","IR"],
- ["ATL","Brian Robinson Jr.","RB","Hamstring","OUT"],["ATL","Michael Jerrell","OT","Bicep","OUT"],["ATL","Divine Deablo","LB","Forearm","OUT"],["ATL","Billy Bowman Jr.","DB","Hamstring","OUT"],
- ["ATL","Beaux Collins","WR","Hip","Q"],["ATL","Olamide Zaccheaus","WR","Shoulder","Q"],["ATL","Cameron Williams","OT","Ankle","Q"],["ATL","Samson Ebukam","DE","Hamstring","Q"],["ATL","Za'Darius Smith","DE","Neck","Q"],["ATL","Gervon Dexter","DT","Hamstring","Q"],["ATL","Kendal Daniels","LB","Neck","Q"],["ATL","C.J. Henderson","CB","Groin","Q"],["ATL","A.J. Terrell","CB","Groin","Q"],["ATL","Avieon Terrell","CB","Back","Q"],
- ["BAL","Tavius Robinson","OLB","Pectoral","OUT"],["BAL","Jaylinn Hawkins","S","Knee","OUT"],["BAL","T.J. Tampa","CB","Knee","DOUBT"],["BAL","Lamar Jackson","QB","Ankle","Q"],["BAL","Broderick Washington","DT","Ankle","Q"],
- ["TB","Emeka Egbuka","WR","Concussion/foot","OUT"],["TB","Luke Goedeke","OT","Calf","OUT"],["TB","Antoine Winfield Jr.","S","Rib","OUT"],["TB","Baker Mayfield","QB","Right thumb","Q"],["TB","Jalen McMillan","WR","Knee","IR"],
- ["CAR","Thomas Incoom","OLB","Calf","OUT"],["CAR","Jaelan Phillips","OLB","Hamstring","OUT"],["CAR","Monroe Freeling","OT","Knee","Q"],["CAR","Bam Martin-Scott","LB","Hamstring","Q"],["CAR","Jonathon Brooks","RB","Core muscle","IR"],
- ["NYG","Tremaine Edmunds","LB","Shoulder","OUT"],["NYG","Greg Newsome II","CB","Concussion","OUT"],["NYG","Theo Johnson","TE","Neck","DOUBT"],["NYG","Jermaine Eluemunor","OT","Calf","Q"],["NYG","Marcus Mbow","OL","Knee","Q"],["NYG","Paulson Adebo","CB","Knee","Q"],["NYG","Jevon Holland","S","Concussion","Q"],["NYG","Tyler Nubin","S","Neck","Q"],["NYG","Jaxson Dart","QB","Knee","SZN"],
- ["HOU","David Montgomery","RB","Groin","OUT"],["HOU","Blake Fisher","OT","Thumb","OUT"],["HOU","Reed Blankenship","S","Concussion/hand","OUT"],["HOU","Jalen Pitre","S","Shoulder","OUT"],["HOU","Tank Dell","WR","Knee","Q"],["HOU","Jayden Higgins","WR","Knee","SZN"],
- ["IND","Anthony Gould","WR","Concussion","OUT"],["IND","Tyler Warren","TE","Groin","OUT"],["IND","Sauce Gardner","CB","Calf","OUT"],["IND","CJ Allen","LB","Ankle","Q"],["IND","Bryce Boettcher","LB","Groin","Q"],["IND","Justin Walley","CB","Knee","Q"],["IND","Rigoberto Sanchez","P","Right foot","Q"],["IND","Alec Pierce","WR","Heel","IR"],
- ["MIN","Jordan Mason","RB","Thumb","Q"],
- ["MIA","Reese Taylor","CB","Quad","OUT"],["MIA","Robert Beal Jr.","EDGE","Hamstring","DOUBT"],["MIA","Willie Gay Jr.","LB","Illness","Q"],["MIA","Kyle Louis","S","Knee","Q"],["MIA","De'Von Achane","RB","Knee","SZN"],
- ["NYJ","Max Mitchell","OL","Concussion","OUT"],["NYJ","Joseph Ossai","EDGE","Ankle","OUT"],["NYJ","Francisco Mauigoa","LB","Quad","OUT"],["NYJ","Breece Hall","RB","Quad","Q"],["NYJ","Kene Nwangwu","RB","Knee","Q"],["NYJ","Dylan Parham","OL","Knee","Q"],
- ["CLE","Dillon Gabriel","QB","Back","OUT"],["CLE","Teven Jenkins","G","Back","OUT"],["CLE","Khalil Davis","DT","Quad","OUT"],["CLE","Mike Hall","DT","Ankle","OUT"],["CLE","Dylan Sampson","RB","Knee","Q"],["CLE","Quincy Williams","LB","Neck","Q"],["CLE","Denzel Ward","CB","Hand","Q"],["CLE","Grant Delpit","S","Concussion/shoulder","Q"],
- ["TEN","Tyjae Spears","RB","Knee","Q"],["TEN","Calvin Ridley","WR","Hip","Q"],["TEN","Dorian Mausi","LB","Foot","Q"],["TEN","Tony Adams","S","Ankle","Q"],["TEN","Kevin Winston Jr.","S","Quad","Q"],
- ["DEN","Tyler Badie","RB","Thumb","OUT"],["DEN","Jonah Elliss","OLB","Ankle","OUT"],["DEN","Talanoa Hufanga","S","Ankle","OUT"],["DEN","Jonah Coleman","RB","Ankle","Q"],["DEN","Patrick Surtain II","CB","Ankle","Q"],["DEN","Pat Bryant","WR","Ankle","IR"],
- ["ARI","Jeremiyah Love","RB","Ankle","OUT"],["ARI","Jon Gaines II","OL","Knee/ankle","OUT"],["ARI","Walter Nolen","DL","Ankle","OUT"],["ARI","Andrew Wingard","S","Knee","OUT"],["ARI","Carson Beck","QB","Back","Q"],["ARI","Darius Robinson","DL","Back","Q"],["ARI","Max Melton","CB","Knee","Q"],["ARI","Budda Baker","S","Groin/illness","Q"],
- ["GB","Zaire Franklin","LB","Shin","OUT"],["GB","Bo Melton","WR","Back","Q"],["GB","Aaron Banks","G","Knee/toe","Q"],["GB","Jordon Riley","DT","Achilles","Q"],["GB","Benjamin St-Juste","CB","Hamstring","Q"],
- ["DET","Cade Mays","C","Wrist","Q"],["DET","Brian Branch","S","Achilles","Q"],
- ["LAR","Nate Landman","LB","Concussion","OUT"],["LAR","Puka Nacua","WR","Calf","Q"],["LAR","Trent McDuffie","CB","Groin","Q"],["LAR","Davante Adams","WR","Ruptured hamstring (6-10 wks)","SZN"],["LAR","Terrance Ferguson","TE","Ankle","IR"],
- ["LV","Dont'e Thornton Jr.","WR","Hamstring","OUT"],["LV","Carter Runyon","TE","Foot","OUT"],["LV","Mike Washington Jr.","RB","Foot/back","Q"],
- ["KC","Brashard Smith","RB","Hamstring","OUT"],["KC","Rashee Rice","WR","Hamstring/knee","OUT"],["KC","Jaylon Moore","OL","Concussion","OUT"],["KC","Cooper McDonald","LB","Knee","Q"],["KC","L'Jarius Sneed","CB","Knee","Q"],
- ["SEA","Zach Charbonnet","RB","Knee (PUP)","OUT"],["SEA","Chazz Surratt","LB","Calf","OUT"],["SEA","Drake Thomas","LB","Ankle","OUT"],["SEA","Drew Lock","QB","Right elbow","Q"],["SEA","Demarcus Lawrence","LB","Knee","Q"],["SEA","Uchenna Nwosu","LB","Hip","Q"],["SEA","Connor O'Toole","LB","Hamstring","Q"],["SEA","Nick Emmanwori","S","Hip","Q"],["SEA","Jadarian Price","RB","Chest","IR"],
- ["PHI","Jalen Hurts","QB","Blood clots (reported)","SZN"],["PHI","Will Shipley","RB","Foot","IR"],["PHI","Tank Bigsby","RB","Abdomen","IR"],
- ["LAC","Ladd McConkey","WR","Concussion","INJ"],["LAC","David Njoku","TE","Knee","IR"],
- ["WAS","Stefon Diggs","WR","Hamstring","INJ"],["WAS","Jacory Croskey-Merritt","RB","Groin","IR"],
- ["BUF","DJ Moore","WR","Shoulder","INJ"]
+ ["ARI","Roy Lopez","DT","Toe","Q"],
+ ["ARI","Jayden Williams","OT","","INACT"],
+ ["ARI","Albert Reese IV","OT","","INACT"],
+ ["ARI","Starling Thomas V","CB","","INACT"],
+ ["ARI","Bam Knight","RB","","INACT"],
+ ["ARI","Eku Leota","LB","","INACT"],
+ ["ARI","Jon Gaines II","G","","INACT"],
+ ["ARI","James Conner","RB","Foot","IR"],
+ ["ARI","Jeremiyah Love","RB","Ankle","IR"],
+ ["ARI","Kendrick Bourne","WR","Tibia","IR"],
+ ["ATL","Billy Bowman Jr.","CB","","OUT"],
+ ["ATL","Jack Strand","QB","","INACT"],
+ ["ATL","Drake Jackson","DE","","INACT"],
+ ["ATL","Robert Longerbeam","CB","","INACT"],
+ ["ATL","Zachariah Branch","WR","","INACT"],
+ ["ATL","Cameron Williams","OL","Ankle","IR"],
+ ["ATL","Brian Robinson Jr.","RB","Hamstring","IR"],
+ ["ATL","Samson Ebukam","DE","Hamstring","IR"],
+ ["ATL","Anterio Thompson","DT","Foot","OUT"],
+ ["BAL","Lamar Jackson","QB","Thumb","IR"],
+ ["BAL","Kyle Hamilton","S","Hip","Q"],
+ ["BAL","Adisa Isaac","LB","Hamstring","Q"],
+ ["BAL","Nate Wiggins","CB","Illness","OUT"],
+ ["BAL","Kedon Slovis","QB","Coach's decision","INACT"],
+ ["BAL","Elijah Sarratt","WR","","INACT"],
+ ["BAL","Emery Jones Jr.","OT","","INACT"],
+ ["BAL","Aeneas Peebles","DT","","INACT"],
+ ["BAL","Tyler Huntley","QB","Toe","IR"],
+ ["BAL","Jaylinn Hawkins","S","Knee","OUT"],
+ ["BAL","Adam Randall","RB","Neck","IR"],
+ ["BUF","Alec Anderson","OT","Ankle","Q"],
+ ["BUF","Dion Dawkins","OT","Ribs","Q"],
+ ["BUF","Tyrell Shavers","WR","Knee","Q"],
+ ["BUF","Joshua Palmer","WR","Hamstring","OUT"],
+ ["BUF","Jordan Hancock","CB","Hamstring","IR"],
+ ["BUF","Greg Gaines","DT","","Q"],
+ ["CAR","AJ Dillon","RB","Coach's decision","INACT"],
+ ["CAR","Haynes King","QB","Emergency 3rd QB","INACT"],
+ ["CAR","Bobby Okereke","LB","","INACT"],
+ ["CAR","Jaelan Phillips","LB","","INACT"],
+ ["CAR","Will Lee III","CB","","INACT"],
+ ["CAR","Damien Lewis","G","","INACT"],
+ ["CAR","TeRah Edwards","DT","","INACT"],
+ ["CAR","Brady Christensen","G","Hamstring","IR"],
+ ["CAR","Jonathon Brooks","RB","Core","IR"],
+ ["CAR","Xavier Legette","WR","Knee","IR"],
+ ["CHI","Luther Burden III","WR","Concussion","Q"],
+ ["CHI","Tyrique Stevenson Sr.","CB","Hand","Q"],
+ ["CHI","Malik Muhammad II","CB","Toe","OUT"],
+ ["CHI","Case Keenum","QB","Coach's decision","INACT"],
+ ["CHI","Kyle Monangai","RB","Thumb/toe","OUT"],
+ ["CHI","Keyshaun Elliott","LB","","INACT"],
+ ["CHI","Jayden Loving","DT","","INACT"],
+ ["CHI","Zavier Scott","RB","Wrist","IR"],
+ ["CHI","Kentavius Street","DT","Knee","IR"],
+ ["CHI","Braxton Jones","OT","Knee","IR"],
+ ["CIN","Landon Robinson","DT","","INACT"],
+ ["CIN","Myles Hinton","OT","","INACT"],
+ ["CIN","Connor Lew","C","","INACT"],
+ ["CIN","Kyle Dugger","S","","INACT"],
+ ["CIN","Cashius Howell","DE","Wrist","IR"],
+ ["CIN","Andrei Iosivas","WR","Thumb","IR"],
+ ["CIN","Erick All Jr.","TE","Knee","IR"],
+ ["CLE","Taylen Green","QB","Emergency 3rd QB","INACT"],
+ ["CLE","Deshaun Watson","QB","Concussion","OUT"],
+ ["CLE","Noah Igbinoghene","CB","","INACT"],
+ ["CLE","Parker Brailsford","C","","INACT"],
+ ["CLE","Maliek Collins","DT","","INACT"],
+ ["DAL","Jake Ferguson","TE","Knee","Q"],
+ ["DAL","P.J. Locke","S","Concussion","Q"],
+ ["DAL","Jonathan Mingo","WR","Ankle","Q"],
+ ["DAL","Donovan Ezeiruaku","LB","Ankle","Q"],
+ ["DAL","Joey Porter Jr.","CB","Ankle","OUT"],
+ ["DAL","DeMarvion Overshown","LB","Hamstring/back","OUT"],
+ ["DAL","Luke Schoonmaker","TE","Groin","OUT"],
+ ["DAL","KaVontae Turpin","WR","","INACT"],
+ ["DAL","Tyrus Wheat","LB","","INACT"],
+ ["DAL","Ajani Cornelius","OT","","INACT"],
+ ["DAL","George Pickens","WR","Hamstring","OUT"],
+ ["DAL","Jonathan Bullard","DT","Calf","IR"],
+ ["DAL","Malachi Lawrence","LB","Ankle","IR"],
+ ["DEN","Riley Moss","CB","Concussion","Q"],
+ ["DEN","Jaylen Waddle","WR","Concussion","Q"],
+ ["DEN","Lil'Jordan Humphrey","WR","Coach's decision","INACT"],
+ ["DEN","Talanoa Hufanga","S","Ankle","OUT"],
+ ["DEN","Sam Ehlinger","QB","Coach's decision","INACT"],
+ ["DEN","Brandon Jones","S","","INACT"],
+ ["DEN","Kris Abrams-Draine","CB","","INACT"],
+ ["DEN","Dallen Bentley","TE","","INACT"],
+ ["DEN","Kage Casey","OT","","INACT"],
+ ["DEN","Eyioma Uwazurike","DE","Shoulder","IR"],
+ ["DET","Jacob Saylors","RB","Neck","OUT"],
+ ["DET","Mekhi Wingo","DT","","INACT"],
+ ["DET","DJ Wonnum","LB","","INACT"],
+ ["DET","Cade Mays","C","","INACT"],
+ ["DET","Jackson Meeks","WR","","INACT"],
+ ["DET","D.J. Reed","CB","","INACT"],
+ ["DET","Ahmed Hassanein","DE","","INACT"],
+ ["DET","Jack Campbell","LB","Neck","IR"],
+ ["DET","Kerby Joseph","S","Knee","OUT"],
+ ["DET","Jimmy Rolder","LB","Hamstring","IR"],
+ ["DET","Isiah Pacheco","RB","Back","IR"],
+ ["GB","Josh Jacobs","RB","Finger","Q"],
+ ["GB","Bo Melton","WR","Concussion","Q"],
+ ["GB","Ty'Ron Hopper","LB","Chest","Q"],
+ ["GB","MarShawn Lloyd","RB","Knee","OUT"],
+ ["GB","Josh Whyle","TE","","INACT"],
+ ["GB","Sean Rhyan","G","","INACT"],
+ ["GB","Donovan Jennings","G","","INACT"],
+ ["GB","Zaire Franklin","LB","","INACT"],
+ ["GB","Travis Glover","OT","","INACT"],
+ ["GB","Chris Brooks","RB","Ankle","IR"],
+ ["GB","Micah Parsons","DE","Knee","OUT"],
+ ["HOU","Febechi Nwaiwu","G","","INACT"],
+ ["HOU","Braden Smith","OT","","INACT"],
+ ["HOU","Cade Stover","TE","","INACT"],
+ ["HOU","Nate Thomas","OT","","INACT"],
+ ["HOU","David Montgomery","RB","","INACT"],
+ ["HOU","Reed Blankenship","S","","INACT"],
+ ["HOU","Jaylin Noel","WR","Toe","IR"],
+ ["IND","Mo Alie-Cox","TE","Groin","Q"],
+ ["IND","Jalen Travis","OT","Knee","Q"],
+ ["IND","Jaylon Carlies","LB","Neck","Q"],
+ ["IND","Riley Leonard","QB","Coach's decision","INACT"],
+ ["IND","Justin Walley","CB","","INACT"],
+ ["IND","Will Mallory","TE","","INACT"],
+ ["IND","Akeem Davis-Gaither","LB","","INACT"],
+ ["IND","Charlie Heck","OT","","INACT"],
+ ["IND","Pharaoh Brown","TE","","INACT"],
+ ["IND","A.J. Haulcy","S","Ankle","OUT"],
+ ["IND","Alec Pierce","WR","Heel","IR"],
+ ["JAX","Wesley Williams","DE","","INACT"],
+ ["JAX","CJ Williams","WR","","INACT"],
+ ["JAX","Cam'Ron Silmon-Craig","S","","INACT"],
+ ["JAX","Alijah Huzzie","CB","","INACT"],
+ ["JAX","Eric Murray","S","Elbow","IR"],
+ ["KC","Patrick Mahomes","QB","Elbow","Q"],
+ ["KC","Xavier Worthy","WR","Hamstring","Q"],
+ ["KC","Jaylon Moore","OT","Ankle","Q"],
+ ["KC","Garrett Nussmeier","QB","Emergency 3rd QB","INACT"],
+ ["KC","Peter Woods","DT","","INACT"],
+ ["KC","Ben VanSumeren","FB","","INACT"],
+ ["KC","Diego Pounds","OT","","INACT"],
+ ["KC","Jack Pyburn","LB","","INACT"],
+ ["KC","Mansoor Delane","CB","","INACT"],
+ ["KC","L'Jarius Sneed","CB","Knee","IR"],
+ ["KC","Omarr Norman-Lott","DT","Knee","OUT"],
+ ["LV","Trey Zuhn III","C","Concussion","Q"],
+ ["LV","Dont'e Thornton Jr.","WR","Coach's decision","INACT"],
+ ["LV","Malik Benson","WR","Coach's decision","INACT"],
+ ["LV","Aidan O'Connell","QB","Emergency 3rd QB","INACT"],
+ ["LV","Dalton Johnson","S","","INACT"],
+ ["LV","Thomas Booker IV","DT","","INACT"],
+ ["LV","Bryce Cabeldue","G","","INACT"],
+ ["LAC","Ladd McConkey","WR","Back","Q"],
+ ["LAC","Justin Herbert","QB","Finger","Q"],
+ ["LAC","Isas Waxter","CB","Ankle","Q"],
+ ["LAC","Justin Eboigbe","DT","Ankle","Q"],
+ ["LAC","Kayode Awosika","G","Lower leg","OUT"],
+ ["LAC","Brenen Thompson","WR","Quadriceps/hamstring","OUT"],
+ ["LAC","Kendall Williamson","S","","INACT"],
+ ["LAC","Theo Wease Jr.","WR","","INACT"],
+ ["LAC","Deane Leonard","CB","","INACT"],
+ ["LAC","Denzel Perryman","LB","Undisclosed","IR"],
+ ["LAC","David Njoku","TE","Fibula","IR"],
+ ["LAR","Puka Nacua","WR","Knee","Q"],
+ ["LAR","Terrance Ferguson","TE","Hamstring","IR"],
+ ["LAR","Steve Avila","G","Hamstring","Q"],
+ ["LAR","Joe Cardona","LS","Ankle","OUT"],
+ ["LAR","Ty Simpson","QB","Emergency 3rd QB","INACT"],
+ ["LAR","Trent McDuffie","CB","Back","OUT"],
+ ["LAR","Keagen Trost","OT","","INACT"],
+ ["LAR","Bill Murray","G","","INACT"],
+ ["LAR","Darryl Peterson III","LB","","INACT"],
+ ["LAR","Desjuan Johnson","DE","","INACT"],
+ ["LAR","Jaylen Watson","CB","Shoulder","IR"],
+ ["LAR","Dean Connors","RB","Hand","IR"],
+ ["MIA","Malik Willis","QB","","Q"],
+ ["MIA","Will Kacmarek","TE","Quad","Q"],
+ ["MIA","Jaylen Wright","RB","Quadriceps","OUT"],
+ ["MIA","Reese Taylor","CB","","INACT"],
+ ["MIA","Jalen Tolbert","WR","","INACT"],
+ ["MIA","Chukwuebuka Godrick","OT","","INACT"],
+ ["MIA","Christian Haynes","G","","INACT"],
+ ["MIA","Justin Joly","TE","","INACT"],
+ ["MIA","Marcellas Dial Jr.","CB","","INACT"],
+ ["MIN","Demond Claiborne","RB","Knee","OUT"],
+ ["MIN","Jauan Jennings","WR","Calf","OUT"],
+ ["MIN","Kyler Murray","QB","Hamstring","OUT"],
+ ["MIN","Jay Ward","S","","Q"],
+ ["NE","Ben Brown","C","Knee","Q"],
+ ["NE","Brenden Schooler","S","Hamstring","Q"],
+ ["NE","Will Campbell","OT","Knee","Q"],
+ ["NE","Rhamondre Stevenson","RB","","Q"],
+ ["NE","Carlton Davis III","CB","Knee","Q"],
+ ["NE","Behren Morton","QB","Emergency 3rd QB","INACT"],
+ ["NE","TreVeyon Henderson","RB","","INACT"],
+ ["NE","A.J. Brown","WR","","INACT"],
+ ["NE","Dametrious Crownover","OT","","INACT"],
+ ["NE","Charles Woods","CB","Hamstring","OUT"],
+ ["NE","Greg Van Roten","G","Hamstring","IR"],
+ ["NO","Erik McCoy","C","Biceps","Q"],
+ ["NO","Zach Wilson","QB","Emergency 3rd QB","INACT"],
+ ["NO","Mason Murphy","OT","","INACT"],
+ ["NO","Mike Reid","CB","","INACT"],
+ ["NO","John Ridgeway III","DT","","INACT"],
+ ["NO","Jaylan Ford","LB","","INACT"],
+ ["NO","Christen Miller","DT","","INACT"],
+ ["NO","CJ Donaldson","RB","","INACT"],
+ ["NO","Travis Etienne Jr.","RB","Hamstring","IR"],
+ ["NYG","Thomas Fidone II","TE","Coach's decision","INACT"],
+ ["NYG","Cam Skattebo","RB","Hamstring","OUT"],
+ ["NYG","CJ Okoye","DT","","INACT"],
+ ["NYG","Nikko Reed","CB","","INACT"],
+ ["NYG","Josh Sills","G","","INACT"],
+ ["NYG","Colton Hood","CB","","INACT"],
+ ["NYG","Marcus Mbow","OT","","INACT"],
+ ["NYJ","Tim Patrick","WR","Coach's decision","INACT"],
+ ["NYJ","Trevin Wallace","LB","","INACT"],
+ ["NYJ","Garrett Wilson","WR","","INACT"],
+ ["NYJ","Blake Freeland","OL","","INACT"],
+ ["NYJ","Kohl Levao","G","","INACT"],
+ ["NYJ","VJ Payne","S","Knee","IR"],
+ ["NYJ","Nahshon Wright","CB","Back","OUT"],
+ ["NYJ","Joseph Ossai","DE","Ankle","OUT"],
+ ["NYJ","Max Mitchell","OT","Concussion","IR"],
+ ["PHI","Zack Baun","LB","Back","Q"],
+ ["PHI","Dontayvion Wicks","WR","","INACT"],
+ ["PHI","DeVonta Smith","WR","","INACT"],
+ ["PHI","Britain Covey","WR","","INACT"],
+ ["PHI","Jonathan Jones","CB","","INACT"],
+ ["PHI","Jihaad Campbell","LB","","INACT"],
+ ["PHI","Michael Carter II","CB","","INACT"],
+ ["PIT","Doneiko Slaughter","CB","","OUT"],
+ ["PIT","Ben Skowronek","WR","","OUT"],
+ ["PIT","Brandin Echols","CB","","OUT"],
+ ["PIT","Michael Pittman Jr.","WR","Foot","IR"],
+ ["PIT","Sebastian Joseph-Day","DT","Triceps","IR"],
+ ["SF","Deommodore Lenoir","CB","Foot","Q"],
+ ["SF","Renardo Green","CB","Back","Q"],
+ ["SF","Gracen Halton","DT","Ankle","OUT"],
+ ["SF","Kurtis Rourke","QB","","INACT"],
+ ["SF","Deebo Samuel Sr.","WR","","INACT"],
+ ["SF","Khalid Kareem","DE","","INACT"],
+ ["SF","Tatum Bethune","LB","","INACT"],
+ ["SF","Enrique Cruz Jr.","OT","","INACT"],
+ ["SF","Mike Evans","WR","Achilles","OUT"],
+ ["SF","Nate Hobbs","CB","Groin","IR"],
+ ["SF","Christian Kirk","WR","Knee","IR"],
+ ["SF","Brandon Aiyuk","WR","Personal","OUT"],
+ ["SEA","Drew Lock","QB","Oblique","Q"],
+ ["SEA","Leonard Williams","DT","","INACT"],
+ ["SEA","Quenton Nelson","G","","INACT"],
+ ["SEA","Uchenna Nwosu","LB","","INACT"],
+ ["SEA","Brandon Pili","DT","","INACT"],
+ ["SEA","Rashid Shaheed","WR","","INACT"],
+ ["SEA","Charles Cross","OT","","INACT"],
+ ["SEA","Sam Darnold","QB","Quadriceps","OUT"],
+ ["TB","Antoine Winfield Jr.","S","Ankle","Q"],
+ ["TB","Billy Schrauth","G","","INACT"],
+ ["TB","Ayden Garnes","CB","","INACT"],
+ ["TB","Trevor Keegan","G","","INACT"],
+ ["TB","DeMonte Capehart","DT","","INACT"],
+ ["TB","Yaya Diaby","LB","","INACT"],
+ ["TB","Jalen McMillan","WR","Knee","IR"],
+ ["TEN","Tommy Townsend","P","","OUT"],
+ ["TEN","Tyjae Spears","RB","","OUT"],
+ ["TEN","Carnell Tate","WR","","OUT"],
+ ["TEN","Peter Skoronski","G","Hamstring","Q"],
+ ["TEN","JC Latham","OT","Finger","Q"],
+ ["TEN","James Williams Sr.","LB","Groin","Q"],
+ ["TEN","Marcus Harris","CB","Ankle","Q"],
+ ["TEN","Dorian Mausi","LB","Foot","IR"],
+ ["WAS","Lucas Patrick","G","Concussion","Q"],
+ ["WAS","Athan Kaliakmanis","QB","Coach's decision","INACT"],
+ ["WAS","Tanoa Togiai","G","","INACT"],
+ ["WAS","Isaac Yiadom","CB","","INACT"],
+ ["WAS","Fabian Moreau","CB","","INACT"],
+ ["WAS","Treylon Burks","WR","","INACT"],
+ ["WAS","Dyami Brown","WR","Calf","IR"],
+ ["WAS","Daron Payne","DT","Foot","IR"],
+ ["WAS","Jeremy McNichols","RB","Foot","IR"],
+ ["WAS","Javon Kinlaw","DT","","IR"],
+ ["PIT","Roman Wilson","WR","Finger","IR"],
+ ["SF","Ricky Pearsall","WR","Knee","SZN"],
+ ["SF","De'Zhaun Stribling","WR","Ankle","IR"],
+ ["NYG","Jaxson Dart","QB","Knee","SZN"],
+ ["HOU","Jayden Higgins","WR","Knee","SZN"],
+ ["MIA","De'Von Achane","RB","Knee","SZN"],
+ ["LAR","Davante Adams","WR","Ruptured hamstring (6-10 wks)","SZN"],
+ ["PHI","Jalen Hurts","QB","Blood clots (reported)","SZN"],
+ ["PHI","Will Shipley","RB","Foot","IR"],
+ ["PHI","Tank Bigsby","RB","Abdomen","IR"],
+ ["WAS","Jacory Croskey-Merritt","RB","Groin","IR"]
 ];
-const INJ_LABEL = {OUT:"OUT", DOUBT:"DOUBT", Q:"Q", IR:"IR", PUP:"PUP", SZN:"SZN", INJ:"INJ"};
-const INJ_FULL = {OUT:"Out", DOUBT:"Doubtful", Q:"Questionable", IR:"Injured reserve", PUP:"PUP list", SZN:"Out for season", INJ:"Injured"};
+const INJ_LABEL = {OUT:"OUT", DOUBT:"DOUBT", Q:"Q", IR:"IR", PUP:"PUP", SZN:"SZN", INJ:"INJ", INACT:"INACT"};
+const INJ_FULL = {OUT:"Out", DOUBT:"Doubtful", Q:"Questionable", IR:"Injured reserve", PUP:"PUP list", SZN:"Out for season", INJ:"Injured", INACT:"Inactive"};
 const INJ_MAP = (function(){
   const m = new Map();
   const norm = n => String(n||'').toLowerCase().replace(/[.'\u2019]/g,'').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
@@ -3344,6 +3654,46 @@ function renderHotWaivers(){
    ordered by carries, pass-catchers by targets, so it reflects
    actual usage rather than a hand-maintained roster order.
 --------------------------------------------------------- */
+const NFL_PROPS = {"DJ Moore":{"t":"BUF","w":{"1":{"y":[47.5,47.5,100.0],"r":[3.5,3.5,5.0],"l":[20.5,21.5,43.0]},"2":{"y":[64.5,61.5,0.0],"r":[4.5,4.5,0.0],"l":[24.5,23.5,0.0]},"3":{"y":[48.5,49.5,67.0],"r":[3.5,3.5,6.0],"l":[22.5,22.5,16.0]},"4":{"y":[50.5,58.5,11.0],"r":[3.5,3.5,1.0],"l":[21.5,21.5,11.0]},"6":{"y":[47.5,50.5,null],"r":[3.5,3.5,null],"l":[23.5,22.5,null]},"8":{"y":[54.5,55.5,82.0],"r":[4.5,4.5,4.0],"l":[23.5,24.5,49.0]},"9":{"y":[46.5,47.5,null],"r":[3.5,3.5,null],"l":[20.5,20.5,null]}}},"Khalil Shakir":{"t":"BUF","w":{"1":{"y":[36.5,38.5,50.0],"r":[3.5,4.5,4.0],"l":[16.5,15.5,19.0]},"2":{"y":[41.5,43.5,38.0],"r":[3.5,3.5,3.0],"l":[17.5,18.5,16.0]},"3":{"y":[42.5,39.5,6.0],"r":[3.5,4.5,1.0],"l":[19.5,17.5,6.0]},"4":{"y":[38.5,33.5,82.0],"r":[3.5,3.5,7.0],"l":[17.5,17.5,51.0]},"5":{"y":[47.5,43.5,80.0],"r":[4.5,4.5,3.0],"l":[20.5,18.5,57.0]},"6":{"y":[43.5,38.5,34.0],"r":[4.5,3.5,4.0],"l":[18.5,17.5,16.0]},"8":{"y":[41.5,36.5,64.0],"r":[3.5,3.5,5.0],"l":[18.5,17.5,26.0]},"9":{"y":[41.5,37.5,null],"r":[3.5,3.5,null],"l":[18.5,16.5,null]}}},"Keon Coleman":{"t":"BUF","w":{"1":{"y":[11.5,11.5,1.0],"r":[1.5,1.5,1.0]},"2":{"y":[14.5,10.5,63.0],"r":[1.5,1.5,6.0]},"3":{"y":[15.5,14.5,37.0],"r":[1.5,1.5,1.0]},"4":{"y":[13.5,14.5,116.0],"r":[1.5,1.5,6.0],"l":[11.5,10.5,34.0]},"5":{"y":[39.5,37.5,7.0],"r":[2.5,3.5,1.0],"l":[19.5,19.5,7.0]},"6":{"y":[40.5,35.5,59.0],"r":[3.5,2.5,4.0],"l":[19.5,19.5,21.0]},"8":{"y":[30.5,30.5,4.0],"r":[2.5,2.5,1.0],"l":[19.5,18.5,4.0]},"9":{"y":[26.5,28.5,null],"r":[2.5,2.5,null],"l":[15.5,16.5,null]}}},"Jauan Jennings":{"t":"MIN","w":{"1":{"y":[18.5,24.5,0.0],"r":[1.5,2.5,0.0],"l":[12.5,13.5,0.0]},"2":{"y":[18.5,17.5,null],"r":[1.5,1.5,null],"l":[13.5,13.5,null]},"3":{"y":[14.5,13.5,1.0],"r":[1.5,1.5,1.0],"l":[11.5,10.5,1.0]},"4":{"y":[27.5,26.5,8.0],"r":[2.5,2.5,1.0],"l":[15.5,15.5,8.0]},"5":{"y":[21.5,18.5,0.0],"r":[1.5,1.5,0.0],"l":[14.5,12.5,0.0]},"7":{"y":[7.5,7.5,34.0],"r":[1.5,1.5,2.0],"l":[8.5,7.5,20.0]},"8":{"y":[12.5,13.5,11.0],"r":[1.5,1.5,2.0],"l":[10.5,10.5,6.0]}}},"Justin Jefferson":{"t":"MIN","w":{"1":{"y":[75.5,74.5,92.0],"r":[6.5,5.5,8.0],"l":[23.5,23.5,39.0]},"2":{"y":[77.5,72.5,55.0],"r":[6.5,5.5,3.0],"l":[25.5,25.5,30.0]},"3":{"y":[74.5,69.5,32.0],"r":[5.5,5.5,2.0],"l":[23.5,22.5,22.0]},"5":{"y":[79.5,77.5,79.0],"r":[6.5,5.5,6.0],"l":[25.5,25.5,21.0]},"7":{"y":[74.5,74.5,44.0],"r":[5.5,5.5,4.0],"l":[25.5,22.5,21.0]},"8":{"y":[74.5,78.5,33.0],"r":[6.5,5.5,5.0],"l":[24.5,25.5,9.0]},"9":{"y":[78.5,68.5,null],"r":[6.5,5.5,null],"l":[23.5,23.5,null]}}},"Jordan Addison":{"t":"MIN","w":{"1":{"y":[43.5,44.5,0.0],"r":[3.5,3.5,0.0],"l":[19.5,19.5,0.0]},"2":{"y":[40.5,36.5,21.0],"r":[3.5,2.5,2.0],"l":[17.5,17.5,15.0]},"3":{"y":[36.5,32.5,90.0],"r":[3.5,2.5,5.0],"l":[18.5,17.5,41.0]},"4":{"y":[62.5,54.5,52.0],"r":[4.5,4.5,4.0],"l":[25.5,24.5,27.0]},"5":{"y":[40.5,40.5,null],"r":[3.5,3.5,null],"l":[19.5,19.5,null]},"7":{"y":[37.5,43.5,20.0],"r":[3.5,3.5,2.0],"l":[20.5,20.5,11.0]},"8":{"y":[37.5,39.5,66.0],"r":[3.5,3.5,3.0],"l":[17.5,18.5,51.0]},"9":{"y":[43.5,36.5,null],"r":[3.5,3.5,null],"l":[19.5,18.5,null]}}},"Tai Felton":{"t":"MIN","w":{"4":{"y":[16.5,12.5,14.0],"r":[1.5,1.5,1.0],"l":[10.5,10.5,14.0]},"5":{"y":[10.5,10.5,27.0],"r":[1.5,1.5,2.0]},"9":{"y":[6.5,6.5,null]}}},"Greg Dortch":{"t":"BUF","w":{"5":{"y":[2.5,3.5,0.0],"r":[0.5,0.5,0.0]}}},"Skyler Bell":{"t":"BUF","w":{"5":{"y":[14.5,5.5,0.0],"r":[1.5,0.5,0.0]},"6":{"y":[12.5,10.5,0.0],"r":[1.5,1.5,0.0],"l":[10.5,8.5,0.0]},"9":{"y":[6.5,5.5,null],"r":[0.5,0.5,null]}}}};
+
+const PROP_MK = [['y','Rec Yds'],['r','Rec'],['l','Long']];
+let matchupWeekForProps = null;
+function propsBlockHtml(team, weekNum){
+  const names = Object.keys(NFL_PROPS).filter(n => NFL_PROPS[n].t === team.abbr && (NFL_PROPS[n].w[String(weekNum)] || Object.keys(NFL_PROPS[n].w).length > 1));
+  if (!names.length) return '';
+  const rows = names.map(n => {
+    const p = NFL_PROPS[n];
+    const cur = p.w[String(weekNum)] || {};
+    const tds = PROP_MK.map(([k]) => {
+      const c = cur[k];
+      // season history: every earlier week with a graded result
+      const hist = Object.entries(p.w).filter(([w,m]) => +w < weekNum && m[k] && m[k][2] !== null).map(([w,m]) => m[k]);
+      const n = hist.length, ov = hist.filter(h => h[2] > h[0]).length;
+      const avgA = n ? hist.reduce((s,h)=>s+h[2],0)/n : null;
+      const avgL = n ? hist.reduce((s,h)=>s+h[0],0)/n : null;
+      let cell = '';
+      if (c){
+        const mv = c[0]-c[1];
+        const mvTxt = mv ? ` <span class="props-mv ${mv>0?'up':'dn'}">${mv>0?'▲':'▼'}${Math.abs(mv)} (open ${c[1]})</span>` : '';
+        const res = c[2] !== null ? ` <span class="props-mv">→ ${c[2]} ${c[2]>c[0]?'O':'U'}</span>` : '';
+        cell = `<span class="props-line">${c[0]}</span>${mvTxt}${res}`;
+      } else cell = `<span class="props-mv">no line</span>`;
+      if (n){
+        const pct = ov/n;
+        cell += `<span class="props-rate ${pct<=0.34?'lo':pct>=0.6?'hi':''}">${ov}/${n} O · avg ${avgA.toFixed(0)} vs ${avgL.toFixed(0)}</span>`;
+      }
+      return `<td>${cell}</td>`;
+    }).join('');
+    return `<tr><td class="pn">${n}</td>${tds}</tr>`;
+  }).join('');
+  return `
+    <div class="props-block">
+      <p class="props-title">WR Props — ${team.abbr}</p>
+      <p class="props-sub">DraftKings · Week ${weekNum} line (▲▼ vs open) · season O/U record vs line, avg actual vs avg line (earlier weeks, voids excluded)</p>
+      <table class="props-tbl"><thead><tr><th>Player</th>${PROP_MK.map(([,l])=>`<th>${l}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
 function teamDepthChart(team){
   const latest = teamLatestGame(team);
   if (!latest) return { qb: [], rb: [], rec: [], weekLabel: null };
@@ -3442,6 +3792,10 @@ function matchupCardHtml(away, home, when){
             ${depthGroupHtml('RB', homeDC.rb)}
             ${depthGroupHtml('WR / TE', homeDC.rec)}
           </div>
+        </div>
+        <div class="matchup-depth-cols props-cols">
+          <div>${propsBlockHtml(away, matchupWeekForProps)}</div>
+          <div>${propsBlockHtml(home, matchupWeekForProps)}</div>
         </div>
       </div>
     </div>
@@ -3616,6 +3970,7 @@ function renderMatchupView(weekNum){
     return;
   }
 
+  matchupWeekForProps = weekNum;
   let html = '';
   let lastSlate;
   pairs.forEach(p => {
@@ -3636,6 +3991,9 @@ function switchMiddleView(view){
   document.getElementById('view-toggle-cards').classList.toggle('active', view === 'cards');
   document.getElementById('view-toggle-matchups').classList.toggle('active', view === 'matchups');
   document.getElementById('view-toggle-nhl').classList.toggle('active', view === 'nhl');
+  document.getElementById('view-toggle-nflw').classList.toggle('active', view === 'nflw');
+  document.getElementById('nflw-view-wrap').style.display = view === 'nflw' ? '' : 'none';
+  if (view === 'nflw') renderNflWeak();
   document.getElementById('view-toggle-nba').classList.toggle('active', view === 'nba');
   document.getElementById('view-toggle-bets').classList.toggle('active', view === 'bets');
   document.getElementById('matchup-week-select').style.display = view === 'matchups' ? '' : 'none';
@@ -3650,7 +4008,7 @@ function switchMiddleView(view){
     document.getElementById('page-layout-el').classList.remove('split-active');
   }
 
-  document.getElementById('page-layout-el').style.display = (view === 'nhl' || view === 'nba' || view === 'bets') ? 'none' : '';
+  document.getElementById('page-layout-el').style.display = (view === 'nhl' || view === 'nba' || view === 'bets' || view === 'nflw') ? 'none' : '';
   document.getElementById('bets-view-wrap').style.display = view === 'bets' ? '' : 'none';
   document.getElementById('nba-view-wrap').style.display = view === 'nba' ? '' : 'none';
   document.getElementById('inj-legend').style.display = (view === 'nba' || view === 'bets') ? 'none' : '';
@@ -4555,6 +4913,98 @@ function renderNbaSchedule(){
   document.getElementById('nba-schedule').innerHTML = html;
 }
 renderNbaSchedule();
+
+const NFLW_POS = {"BUF":{"QB":["joshallen","kyleallen"],"RB":["jamescook","raydavis","frankgore","tyjohnson"],"WR":["djmoore","khalilshakir","keoncoleman","skylerbell","joshuapalmer"],"TE":["daltonkincaid","dawsonknox","jacksonhawes"]},"MIA":{"QB":["malikwillis"],"RB":["devonachane","jaylenwright","olliegordon","djherman","kaytronallen","carloswashington"],"WR":["calebdouglas","malikwashington","chrisbell","kevincoleman","ryanmiller","jalentolbert"],"TE":["gregdulcich","willkacmarek","seydoutraore"]},"NE":{"QB":["drakemaye","tommydevito"],"RB":["rhamondrestevenson","coreykiner","lanlarison","treveyonhenderson","reggiegilliam"],"WR":["mackhollins","ajbrown","demariodouglas","romeodoubs","kylewilliams","eftonchism"],"TE":["hunterhenry","eliraridon"]},"NYJ":{"QB":["genosmith"],"RB":["breecehall","braelonallen","isaiahdavis","andrewbeck"],"WR":["garrettwilson","adonaimitchell","omarcooper","isaiahwilliams","ariansmith","sterlingshepard","timpatrick"],"TE":["kenyonsadiq","jeremyruckert","masontaylor","jelaniwoods"]},"BAL":{"QB":["lamarjackson","tylerhuntley","joefagnano"],"RB":["derrickhenry","justicehill","rasheenali"],"WR":["zayflowers","chrismoore","lajohntaywester","jakobilane","rashodbateman","devontezwalker","elijahsarratt"],"TE":["markandrews","durhamsmythe","joshcuevas","matthibner"]},"CIN":{"QB":["joeburrow"],"RB":["chasebrown","samajeperine","tahjbrooks"],"WR":["dohntemeyers","teehiggins","jamarrchase","andreiiosivas","colbieyoung","mitchelltinsley"],"TE":["mikegesicki","drewsample","tannerhudson","erickall","jackendries"]},"CLE":{"QB":["deshaunwatson","shedeursanders"],"RB":["quinshonjudkins","raheimsanders","jaleelmclaughlin","michaelburton","dylansampson","audricestime"],"WR":["kcconcepcion","denzelboston","jerryjeudy","isaiahbond","tylanwallace","malachicorley"],"TE":["haroldfannin","blakewhiteheart"]},"PIT":{"QB":["aaronrodgers","masonrudolph"],"RB":["jaylenwarren","ricodowdle","travishomer","lewnichols","rileynowakowski"],"WR":["michaelpittman","dkmetcalf","romanwilson","germiebernard","benskowronek","brandonsmith","brandonjohnson"],"TE":["patfreiermuth","darnellwashington","roberttonyan"]},"HOU":{"QB":["cjstroud","davismills"],"RB":["davidmontgomery","woodymarks","jawharjordan","emaridemercado","dareogunbowale"],"WR":["nicocollins","jaylinnoel","xavierhutchinson","kayshonboutte","jaredwayne","lewisbond","marvinharrison","tankdell"],"TE":["daltonschultz","marlinklein","fostermoreau","cadestover","brevinjordan"]},"IND":{"QB":["danieljones","anthonyrichardson"],"RB":["jonathantaylor","sethmcgowan","djgiddens"],"WR":["alecpierce","joshdowns","keenanallen","laquontreadwell","ashtondulin","deionburks","nickwestbrookikhine","anthonygould"],"TE":["tylerwarren","moaliecox","willmallory","pharaohbrown","drewogletree"]},"JAX":{"QB":["trevorlawrence","nickmullens","quinnewers"],"RB":["bhayshultuten","ameerabdullah","chrisrodriguez","lequintallen"],"WR":["travishunter","jakobimeyers","parkerwashington","brianthomas","joshcameron"],"TE":["brentonstrange","nateboerkircher","quintinmorris","tannerkoziol"]},"TEN":{"QB":["camward"],"RB":["tonypollard","tyjaespears","nicholassingleton","kalelmullings","michaelcarter"],"WR":["carnelltate","wandalerobinson","elicayomanor","chimeredike","calvinridley"],"TE":["gunnarhelm","danielbellinger","kylengranson"]},"DEN":{"QB":["bonix"],"RB":["jkdobbins","rjharvey","jonahcoleman","tylerbadie","adamprentice"],"WR":["troyfranklin","patbryant","courtlandsutton","jaylenwaddle","liljordanhumphrey","marvinmims"],"TE":["evanengram","adamtrautman","nateadkins"]},"KC":{"QB":["patrickmahomes","justinfields"],"RB":["kennethwalker","emmettjohnson","brashardsmith","jaydnott"],"WR":["rasheerice","xavierworthy","tyquanthornton","cyrusallen","jalenroyals","andrewarmstrong","justinwatson"],"TE":["traviskelce","jakebriningstool","noahgray"]},"LV":{"QB":["kirkcousins","fernandomendoza"],"RB":["ashtonjeanty","mikewashington","connorheyward","dylanlaube"],"WR":["malikbenson","tretucker","jalennailor","jackbech","codywhite","darekeyoung","deventhompkins"],"TE":["michaelmayer","ianthomas","brockbowers"]},"LAC":{"QB":["justinherbert","djuiagalelei"],"RB":["omarionhampton","keatonmitchell","kimanividal","alecingold"],"WR":["laddmcconkey","treharris","quentinjohnston","deriusdavis","brenenthompson","marquezvaldesscantling","theowease","keandrelambertsmith"],"TE":["davidnjoku","orondegadsden","charliekolar","haydenrucci"]},"DAL":{"QB":["dakprescott"],"RB":["javontewilliams","hunterluepke","emaridemercado","tylergoodson"],"WR":["ceedeelamb","georgepickens","ryanflournoy","jonathanmingo","kavontaeturpin","jordanhudson"],"TE":["brevynspannford","lukeschoonmaker","jakeferguson"]},"NYG":{"QB":["jaxsondart","jameiswinston","jjmccarthy"],"RB":["camskattebo","devinsingletary","tyronetracy","patrickricard","najeeharris","gregdesrosiers"],"WR":["maliknabers","darnellmooney","malachifields","odellbeckham","braxtonberrios","charliejones","jalinhyatt"],"TE":["isaiahlikely","theojohnson","thomasfidone"]},"PHI":{"QB":["jalenhurts","andydalton","tannermckee","joemilton"],"RB":["saquonbarkley","willshipley","tankbigsby","dameonpierce","carsonsteele","elijahmitchell","jaydonblue"],"WR":["dontayvionwicks","devontasmith","makailemon","dariuscooper","elijahmoore","hollywoodbrown"],"TE":["dallasgoedert","johnnymundt","zachertz","elistowers","grantcalcaterra"]},"WAS":{"QB":["jaydendaniels","marcusmariota","athankaliakmanis"],"RB":["jacorycroskeymerritt","rachaadwhite","kaytronallen","austinekeler","craigreynolds","jeremymcnichols"],"WR":["antoniowilliams","stefondiggs","terrymclaurin","jaylinlane","dyamibrown","treylonburks","lukemccaffrey","vanjefferson","jadenbradley"],"TE":["chigokonkwo","johnbates","colsonyankoff","bensinnott"]},"CHI":{"QB":["calebwilliams","tysonbagent","casekeenum"],"RB":["dandreswift","kylemonangai","roschonjohnson","salvonahmed"],"WR":["lutherburden","kalifraymond","romeodunze","jahdaewalker","zavionthomas"],"TE":["colekmet","colstonloveland","samroush"]},"DET":{"QB":["jaredgoff"],"RB":["jahmyrgibbs","sionevaki"],"WR":["amonrastbrown","jamesonwilliams","isaacteslaa","taymartin","deandrecarter"],"TE":["samlaporta","brockwright","jacksonmeeks","tylerconklin"]},"GB":{"QB":["jordanlove","tyrodtaylor"],"RB":["marshawnlloyd","chrisbrooks","kalebjohnson","pierrestrong","joshjacobs"],"WR":["christianwatson","matthewgolden","jaydenreed","bomelton","skyymoore","jmichaelsturdivant","savionwilliams"],"TE":["tuckerkraft","jonnusmith","markredman"]},"MIN":{"QB":["carsonwentz","kylermurray"],"RB":["jordanmason","aaronjones","deejaydallas","demondclaiborne","maxbredeson"],"WR":["justinjefferson","jauanjennings","jordanaddison","mylesprice","taifelton","jeshaunjones"],"TE":["tjhockenson","josholiver","gavinbartholomew","benyurosek"]},"ATL":{"QB":["cooperrush","jackstrand","michaelpenix","tuatagovailoa"],"RB":["bijanrobinson","brianrobinson","khalilherbert"],"WR":["drakelondon","jahandotson","olamidezaccheaus","zachariahbranch","chrisblair"],"TE":["kylepitts","austinhooper","charliewoerner","nickmuse"]},"CAR":{"QB":["bryceyoung","kennypickett"],"RB":["chubahubbard","ajdillon","jonathonbrooks","trevoretienne","anthonytyus"],"WR":["jalencoker","tetairoamcmillan","xavierlegette","jimmyhorn","brycentremayne","johnmetchie","davidmoore","jaseemreed"],"TE":["darrenwaller","tommytremble","mitchellevans"]},"NO":{"QB":["tylershough"],"RB":["travisetienne","kendremiller","cjdonaldson","alvinkamara","zamirwhite","audricestime"],"WR":["barionbrown","chrisolave","devaughnvele","brycelance","kevinaustin","jordyntyson"],"TE":["juwanjohnson","noahfant","oscardelp","treytonwelch"]},"TB":{"QB":["bakermayfield","jalondaniels"],"RB":["buckyirving","kennygainwell","seantucker"],"WR":["chrisgodwin","tezjohnson","emekaegbuka","tedhurst","jalenmcmillan","kameronjohnson"],"TE":["cadeotton","paynedurham","bauersharp"]},"ARI":{"QB":["jacobybrissett","gardnerminshew"],"RB":["tylerallgeier","jeremiyahlove","bamknight","evanhull"],"WR":["kendrickbourne","michaelwilson","marvinharrison","jalenbrooks","reggievirgil","simifehoko","devinduvernay"],"TE":["treymcbride","elijahhiggins","hunterlong","teaganquitoriano"]},"LAR":{"QB":["matthewstafford","stetsonbennettiv","stetsonbennett"],"RB":["blakecorum","kyrenwilliams","ronnierivers"],"WR":["pukanacua","davanteadams","jordanwhittington","konatamumpfield","tutuatwell","xaviersmith"],"TE":["davisallen","tylerhigbee","colbyparkinson","terranceferguson"]},"SF":{"QB":["brockpurdy","macjones"],"RB":["christianmccaffrey","kaelonblack","jordanjames","kylejuszczyk"],"WR":["deebosamuel","demarcusrobinson","mikeevans","khadarelhodge","jordanwatkins","jacobcowing","brandincooks"],"TE":["lukefarrell","georgekittle"]},"SEA":{"QB":["drewlock","samdarnold"],"RB":["jadarianprice","georgeholani","emanuelwilson","bradyrussell","velusjones","zachcharbonnet"],"WR":["jaxonsmithnjigba","cooperkupp","rashidshaheed","toryhorton"],"TE":["ajbarner","elijaharroyo","ericsaubert"]}};
+
+/* ---------- NFL WEAK SPOTS BY POSITION ---------- */
+const NFLW_STATS = [
+  {k:'py', l:'Pass Yds', pos:['QB']},
+  {k:'ry', l:'Rush Yds', pos:['RB','QB']},
+  {k:'cy', l:'Rec Yds', pos:['WR','TE','RB']},
+  {k:'rc', l:'Receptions', pos:['WR','TE','RB']},
+  {k:'td', l:'TDs', pos:['QB','RB','WR','TE']}
+];
+const NFLW_PLUR = {QB:'QBs',RB:'RBs',WR:'WRs',TE:'TEs'};
+let nflwStat = 'cy', nflwWeek = (new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'}) > '2026-11-10') ? 10 : 9;
+let _nflwModel = null;
+function nflwNorm(n){ return String(n||'').toLowerCase().replace(/ (jr|sr|iii|ii|iv)\.?$/,'').replace(/[^a-z]/g,''); }
+function nflwModel(){
+  if (_nflwModel) return _nflwModel;
+  const posOf = (abbr, name) => { const m = NFLW_POS[abbr]; if (!m) return null; const n = nflwNorm(name); for (const p of ['QB','RB','WR','TE']) if (m[p].indexOf(n) >= 0) return p; return null; };
+  const byName = {}; TEAMS.forEach(t => byName[t.name] = t);
+  const blank = () => ({py:0,ry:0,cy:0,rc:0,td:0,car:0,tgts:0,att:0});
+  const allowed = {}; const players = {};
+  TEAMS.forEach(t => { allowed[t.abbr] = {games:0}; players[t.abbr] = {}; });
+  TEAMS.forEach(t => t.games.forEach(g => {
+    if (g.season !== 2026) return;
+    const opp = byName[String(g.opponent||'').replace(/^(vs\.?|at)\s+/i,'').trim()]; if (!opp) return;
+    const D = allowed[opp.abbr]; D.games++;
+    const game = {}; // name -> {pos, stats}
+    const get = (name) => { const p = posOf(t.abbr, name); if (!p) return null; return game[name] || (game[name] = {name, pos:p, s:blank()}); };
+    (g.box.passing||[]).forEach(x => { const o = get(x.name); if (!o) return; o.s.py += x.yds||0; o.s.td += x.td||0; const m = String(x.cAtt||'').split('/'); o.s.att += +m[1]||0; });
+    (g.box.rushing||[]).forEach(x => { const o = get(x.name); if (!o) return; o.s.ry += x.yds||0; o.s.td += x.td||0; o.s.car += x.car||0; });
+    (g.box.receiving||[]).forEach(x => { const o = get(x.name); if (!o) return; o.s.cy += x.yds||0; o.s.rc += x.rec||0; o.s.td += x.td||0; o.s.tgts += x.tgts||0; });
+    Object.values(game).forEach(o => {
+      const P = D[o.pos] = D[o.pos] || blank();
+      ['py','ry','cy','rc','td'].forEach(k => P[k] += o.s[k]);
+      const a = players[t.abbr][o.name] || (players[t.abbr][o.name] = {name:o.name,pos:o.pos,gp:0,s:blank()});
+      a.gp++; Object.keys(a.s).forEach(k => a.s[k] += o.s[k]);
+    });
+  }));
+  const league = {};
+  ['QB','RB','WR','TE'].forEach(p => { league[p] = {}; ['py','ry','cy','rc','td'].forEach(k => {
+    let tot = 0, gms = 0; Object.values(allowed).forEach(D => { if (D.games && D[p]){ tot += D[p][k]; gms += D.games; } });
+    league[p][k] = gms ? tot/gms : 0; }); });
+  const def = (abbr,p,k) => { const D = allowed[abbr]; return D && D.games && D[p] ? D[p][k]/D.games : null; };
+  const rank = (abbr,p,k) => { const arr = Object.keys(allowed).filter(a => allowed[a].games).map(a => [a,def(a,p,k)]).filter(x => x[1] !== null).sort((x,y) => y[1]-x[1]); return arr.findIndex(x => x[0] === abbr)+1; };
+  const byAbbr = {}; TEAMS.forEach(t => byAbbr[t.abbr] = t);
+  return (_nflwModel = {allowed, league, def, rank, players, byAbbr, nTeams:Object.keys(allowed).filter(a=>allowed[a].games).length});
+}
+function nflwOrd(n){ return n + ([,'st','nd','rd'][n%10>3||Math.floor(n/10)===1?0:n%10]||'th'); }
+function nflwTag(p, k, pct){ const th = k==='td' ? 0.15 : 0.08; const tag = pct >= th ? 'soft' : pct <= -th ? 'tough' : 'mid'; return [tag, tag==='soft'?'WEAK':tag==='tough'?'TOUGH':'AVG']; }
+function nflwOut(name){ const i = injuryFor(name); return i && ['OUT','IR','SZN','PUP'].indexOf(i.status) >= 0 ? i : null; }
+function nflwCands(M, abbr, p, k){
+  const list = Object.values(M.players[abbr]||{}).filter(x => x.pos === p);
+  const ok = x => { if (p==='QB') return x.gp>=1 && x.s.att/x.gp >= 10; if (p==='RB') return x.gp>=3 && (k==='ry' ? x.s.car/x.gp >= 5 : (x.s.car+x.s.tgts)/x.gp >= 4); return x.gp>=3 && x.s.tgts/x.gp >= 2.5; };
+  const avg = x => x.s[k]/x.gp;
+  const all = list.filter(ok).sort((a,b) => avg(b)-avg(a));
+  const good = all.filter(x => !nflwOut(x.name));
+  const skipped = all.filter(x => nflwOut(x.name) && (!good[0] || avg(x) > avg(good[0])))[0] || null;
+  return {top: good.slice(0, p==='WR' ? 2 : 1), skipped};
+}
+function renderNflWeak(){
+  const M = nflwModel(); const st = NFLW_STATS.find(x => x.k === nflwStat), k = st.k;
+  document.getElementById('nflw-stat').innerHTML = NFLW_STATS.map(x => `<button class="nba-stat-btn${x.k===nflwStat?' active':''}" onclick="nflwStat='${x.k}';renderNflWeak()">${x.l}</button>`).join('');
+  // Part A: weakest / toughest defenses per position
+  let rank = '';
+  st.pos.forEach(p => {
+    const lv = M.league[p][k];
+    const arr = Object.keys(M.allowed).filter(a => M.allowed[a].games).map(a => [a, M.def(a,p,k)]).filter(x => x[1] !== null).sort((x,y) => y[1]-x[1]);
+    const row = ([a,v]) => { const pct = lv ? (v-lv)/lv : 0; const [tag,txt] = nflwTag(p,k,pct); return `<div class="nflw-li"><span>${M.byAbbr[a].name}</span><span><b>${v.toFixed(1)}</b> <span class="nbaw-tag ${tag}">${pct>=0?'+':''}${(pct*100).toFixed(0)}%</span></span></div>`; };
+    rank += `<p class="nflw-pos-title">${p} &mdash; ${st.l} allowed per game <span class="nflw-note">(league avg ${lv.toFixed(1)})</span></p><div class="nflw-lists"><div class="nflw-col"><h4>Weakest defenses</h4>${arr.slice(0,6).map(row).join('')}</div><div class="nflw-col"><h4>Toughest defenses</h4>${arr.slice(-6).reverse().map(row).join('')}</div></div>`;
+  });
+  document.getElementById('nflw-rank').innerHTML = rank;
+  // Part B: week matchups
+  const sel = document.getElementById('nflw-week');
+  if (!sel.options.length){ for (let w=1; w<=18; w++) sel.add(new Option('Week '+w, w)); }
+  sel.value = nflwWeek;
+  const pairs = computeMatchupsForWeek(nflwWeek);
+  const side = (att, def) => {
+    let rows = '';
+    st.pos.forEach(p => {
+      const v = M.def(def.abbr,p,k), lv = M.league[p][k]; if (v === null) return;
+      const diff = v - lv, pct = lv ? diff/lv : 0, rk = M.rank(def.abbr,p,k);
+      const [tag,txt] = nflwTag(p,k,pct);
+      const c = nflwCands(M, att.abbr, p, k);
+      const tgt = c.top.map(x => { const a = x.s[k]/x.gp; return `${x.name}${injBadge(x.name)} <small>${a.toFixed(1)} avg &rarr; ${(a*(lv ? v/lv : 1)).toFixed(1)}${x.gp<3?` (${x.gp} GP)`:''}</small>`; }).join('<br>') || '&mdash;';
+      const skip = c.skipped ? `<br><small>${c.skipped.name} ${injBadge(c.skipped.name)} skipped</small>` : '';
+      rows += `<div class="nbaw-row" style="grid-template-columns:34px 1fr auto;"><span class="nbaw-pos">${p}</span><span class="nbaw-def">${def.abbr} allows <b>${v.toFixed(1)}</b> ${st.l} to ${NFLW_PLUR[p]} <span class="nbaw-tag ${tag}">${txt} ${diff>=0?'+':''}${diff.toFixed(1)}</span> <small>(${nflwOrd(rk)} most of ${M.nTeams})</small></span><span class="nbaw-target">${tgt}${skip}</span></div>`;
+    });
+    return `<div class="nbaw-side"><p class="nbaw-side-title">${att.name} attacking ${def.name}</p>${rows}</div>`;
+  };
+  const html = pairs.map(pr => `<div class="nbaw-game"><div class="nbaw-head"><span>${pr.away.name} @ ${pr.home.name}</span><small>${pr.when||''}</small></div>${side(pr.away, pr.home)}${side(pr.home, pr.away)}</div>`).join('');
+  document.getElementById('nflw-games').innerHTML = `<p class="nhl-sched-day" style="margin-top:6px;">Week ${nflwWeek} &middot; ${st.l} allowed per game to each position, Weeks 1&ndash;8 box scores</p>` + (html || '<p class="empty-note">No matchups available for this week yet.</p>');
+}
 
 
 function applyTheme(t){
